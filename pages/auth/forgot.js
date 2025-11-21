@@ -1,8 +1,7 @@
-// pages/auth/login.js
-import { useEffect, useState } from "react";
+// pages/auth/forgot.js
+import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/router";
-import { useAuth, useNotification } from "../_app";
+import { useNotification, useAuth } from "../_app";
 
 function AuthLayout({ children }) {
   return (
@@ -40,55 +39,28 @@ function Logo() {
   );
 }
 
-export default function LoginPage() {
-  const router = useRouter();
-  const { login, user, claims, authLoading } = useAuth();
+export default function ForgotPasswordPage() {
+  const { resetPassword } = useAuth();
   const { showNotification } = useNotification();
-
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-
-  // Prefill email jika datang dari register (?email=)
-  useEffect(() => {
-    if (router.query.email && typeof router.query.email === "string") {
-      setEmail(router.query.email);
-    }
-  }, [router.query.email]);
-
-  // Kalau sudah login → langsung ke dashboard sesuai role
-  useEffect(() => {
-    if (!authLoading && user) {
-      const isAdmin = claims?.isAdmin === true;
-      router.replace(isAdmin ? "/admins/home" : "/home");
-    }
-  }, [authLoading, user, claims, router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!email || !password) {
-      showNotification("error", "Email dan password wajib diisi.");
-      return;
-    }
-
-    if (password.length < 8) {
-      showNotification("error", "Password minimal 8 karakter.");
+    if (!email) {
+      showNotification("error", "Email wajib diisi.");
       return;
     }
 
     try {
-      const result = await login(email, password);
-      const isAdmin = result.claims?.isAdmin === true;
-
+      await resetPassword(email);
       showNotification(
         "success",
-        isAdmin ? "Login sebagai admin berhasil." : "Login sebagai user berhasil."
+        "Link reset password telah dikirim ke email jika terdaftar."
       );
-
-      router.push(isAdmin ? "/admins/home" : "/home");
     } catch (err) {
       console.error(err);
-      showNotification("error", err.message || "Gagal login.");
+      showNotification("error", err.message || "Gagal mengirim reset password.");
     }
   };
 
@@ -101,8 +73,10 @@ export default function LoginPage() {
         style={{ display: "grid", gap: 20 }}
       >
         <Logo />
-        <h1 style={{ fontSize: 22, fontWeight: 600 }}>Sign in to your account</h1>
-
+        <h1 style={{ fontSize: 22, fontWeight: 600 }}>Reset your password</h1>
+        <p style={{ fontSize: 13 }}>
+          Enter your email and we’ll send you a link to reset your password.
+        </p>
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <label style={{ fontSize: 14 }}>Email</label>
           <input
@@ -119,35 +93,6 @@ export default function LoginPage() {
             }}
           />
         </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <label style={{ fontSize: 14 }}>Password</label>
-          <input
-            type="password"
-            name="password"
-            value={password}
-            autoComplete="current-password"
-            onChange={(e) => setPassword(e.target.value)}
-            style={{
-              padding: "8px 10px",
-              borderRadius: 8,
-              border: "1px solid #d4d4d8",
-              fontSize: 14
-            }}
-          />
-        </div>
-
-        <div
-          className="flex items-center justify-between"
-          style={{ display: "flex", justifyContent: "space-between" }}
-        >
-          <span style={{ fontSize: 13 }}>
-            <Link href="/auth/forgot" style={{ fontWeight: 600 }}>
-              Forgot password?
-            </Link>
-          </span>
-        </div>
-
         <button
           type="submit"
           className="w-full"
@@ -163,9 +108,8 @@ export default function LoginPage() {
             fontSize: 14
           }}
         >
-          Login
+          Reset password
         </button>
-
         <p style={{ fontSize: 13 }}>
           Don’t have an account?{" "}
           <Link href="/auth/register" style={{ fontWeight: 600 }}>

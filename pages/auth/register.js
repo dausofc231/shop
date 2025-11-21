@@ -1,5 +1,5 @@
-// pages/auth/login.js
-import { useEffect, useState } from "react";
+// pages/auth/register.js
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useAuth, useNotification } from "../_app";
@@ -40,34 +40,20 @@ function Logo() {
   );
 }
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
-  const { login, user, claims, authLoading } = useAuth();
+  const { register } = useAuth();
   const { showNotification } = useNotification();
 
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [gmail, setGmail] = useState("");
   const [password, setPassword] = useState("");
-
-  // Prefill email jika datang dari register (?email=)
-  useEffect(() => {
-    if (router.query.email && typeof router.query.email === "string") {
-      setEmail(router.query.email);
-    }
-  }, [router.query.email]);
-
-  // Kalau sudah login → langsung ke dashboard sesuai role
-  useEffect(() => {
-    if (!authLoading && user) {
-      const isAdmin = claims?.isAdmin === true;
-      router.replace(isAdmin ? "/admins/home" : "/home");
-    }
-  }, [authLoading, user, claims, router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!email || !password) {
-      showNotification("error", "Email dan password wajib diisi.");
+    if (!username || !gmail || !password) {
+      showNotification("error", "Semua field wajib diisi.");
       return;
     }
 
@@ -77,18 +63,19 @@ export default function LoginPage() {
     }
 
     try {
-      const result = await login(email, password);
-      const isAdmin = result.claims?.isAdmin === true;
+      // Register user biasa (tanpa isAdmin)
+      await register(gmail, password);
 
-      showNotification(
-        "success",
-        isAdmin ? "Login sebagai admin berhasil." : "Login sebagai user berhasil."
-      );
+      showNotification("success", "Registrasi berhasil. Silakan login.");
 
-      router.push(isAdmin ? "/admins/home" : "/home");
+      // Arahkan ke login dengan email otomatis terisi
+      router.push({
+        pathname: "/auth/login",
+        query: { email: gmail }
+      });
     } catch (err) {
       console.error(err);
-      showNotification("error", err.message || "Gagal login.");
+      showNotification("error", err.message || "Gagal register.");
     }
   };
 
@@ -101,16 +88,31 @@ export default function LoginPage() {
         style={{ display: "grid", gap: 20 }}
       >
         <Logo />
-        <h1 style={{ fontSize: 22, fontWeight: 600 }}>Sign in to your account</h1>
+        <h1 style={{ fontSize: 22, fontWeight: 600 }}>Create your account</h1>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <label style={{ fontSize: 14 }}>Email</label>
+          <label style={{ fontSize: 14 }}>Username</label>
+          <input
+            name="username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            style={{
+              padding: "8px 10px",
+              borderRadius: 8,
+              border: "1px solid #d4d4d8",
+              fontSize: 14
+            }}
+          />
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <label style={{ fontSize: 14 }}>Gmail</label>
           <input
             type="email"
-            name="email"
-            value={email}
+            name="gmail"
+            value={gmail}
             autoComplete="email"
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => setGmail(e.target.value)}
             style={{
               padding: "8px 10px",
               borderRadius: 8,
@@ -125,8 +127,8 @@ export default function LoginPage() {
           <input
             type="password"
             name="password"
+            autoComplete="new-password"
             value={password}
-            autoComplete="current-password"
             onChange={(e) => setPassword(e.target.value)}
             style={{
               padding: "8px 10px",
@@ -135,17 +137,6 @@ export default function LoginPage() {
               fontSize: 14
             }}
           />
-        </div>
-
-        <div
-          className="flex items-center justify-between"
-          style={{ display: "flex", justifyContent: "space-between" }}
-        >
-          <span style={{ fontSize: 13 }}>
-            <Link href="/auth/forgot" style={{ fontWeight: 600 }}>
-              Forgot password?
-            </Link>
-          </span>
         </div>
 
         <button
@@ -163,13 +154,13 @@ export default function LoginPage() {
             fontSize: 14
           }}
         >
-          Login
+          Create account
         </button>
 
         <p style={{ fontSize: 13 }}>
-          Don’t have an account?{" "}
-          <Link href="/auth/register" style={{ fontWeight: 600 }}>
-            Sign up
+          Already have an account?{" "}
+          <Link href="/auth/login" style={{ fontWeight: 600 }}>
+            Sign in
           </Link>
         </p>
       </form>
