@@ -288,13 +288,6 @@ export default function Home() {
                   >
                     Login
                   </Link>
-                  <Link
-                    href="/auth/register"
-                    className="hover:underline text-slate-800 dark:text-[var(--text)]"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    Register
-                  </Link>
                 </>
               )}
             </nav>
