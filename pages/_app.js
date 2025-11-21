@@ -3,12 +3,15 @@ import "../styles/globals.css";
 import { useEffect } from "react";
 
 function MyApp({ Component, pageProps }) {
-  // set tema awal dari localStorage
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const stored = localStorage.getItem("theme");
     const root = document.documentElement;
-    if (stored === "dark") {
+    const stored = localStorage.getItem("theme");
+
+    if (!stored) {
+      root.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else if (stored === "dark") {
       root.classList.add("dark");
     } else {
       root.classList.remove("dark");
