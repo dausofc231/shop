@@ -1,169 +1,126 @@
 // pages/auth/register.js
 import { useState } from "react";
-import Link from "next/link";
+import { auth, db } from "../../lib/firebase";
+import { createUserWithEmailAndPassword, signOut } from "firebase/auth";
+import { doc, serverTimestamp, setDoc } from "firebase/firestore";
 import { useRouter } from "next/router";
-import { useAuth, useNotification } from "../_app";
+import Link from "next/link";
 
-function AuthLayout({ children }) {
-  return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#f4f4f5",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "16px"
-      }}
-    >
-      <div
-        style={{
-          background: "white",
-          borderRadius: 16,
-          padding: "24px 24px 28px",
-          boxShadow: "0 20px 40px rgba(0,0,0,0.08)",
-          width: "100%",
-          maxWidth: 420
-        }}
-      >
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function Logo() {
-  return (
-    <div style={{ fontWeight: 700, fontSize: 18 }}>
-      <span style={{ color: "#4f46e5" }}>My</span>Shop
-    </div>
-  );
-}
-
-export default function RegisterPage() {
+export default function Register() {
   const router = useRouter();
-  const { register } = useAuth();
-  const { showNotification } = useNotification();
-
   const [username, setUsername] = useState("");
   const [gmail, setGmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMsg("");
 
     if (!username || !gmail || !password) {
-      showNotification("error", "Semua field wajib diisi.");
-      return;
-    }
-
-    if (password.length < 8) {
-      showNotification("error", "Password minimal 8 karakter.");
+      setErrorMsg("Semua field wajib diisi.");
       return;
     }
 
     try {
-      // Register user biasa (tanpa isAdmin)
-      await register(gmail, password);
+      setLoading(true);
+      const res = await createUserWithEmailAndPassword(auth, gmail, password);
+      const user = res.user;
 
-      showNotification("success", "Registrasi berhasil. Silakan login.");
-
-      // Arahkan ke login dengan email otomatis terisi
-      router.push({
-        pathname: "/auth/login",
-        query: { email: gmail }
+      await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
+        username,
+        email: gmail,
+        role: "users",
+        createdAt: serverTimestamp(),
       });
+
+      await signOut(auth);
+
+      router.push(`/auth/login?email=${encodeURIComponent(gmail)}`);
     } catch (err) {
       console.error(err);
-      showNotification("error", err.message || "Gagal register.");
+      setErrorMsg(err.message || "Terjadi kesalahan saat register.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <AuthLayout>
-      <form
-        onSubmit={handleSubmit}
-        method="POST"
-        className="grid w-full max-w-sm grid-cols-1 gap-8"
-        style={{ display: "grid", gap: 20 }}
-      >
-        <Logo />
-        <h1 style={{ fontSize: 22, fontWeight: 600 }}>Create your account</h1>
+    <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-bg-dark text-slate-900 dark:text text-sm">
+      <div className="w-full max-w-sm card">
+        <form onSubmit={handleSubmit} className="grid gap-5">
+          {/* Logo text */}
+          <div className="font-semibold text-lg tracking-tight">
+            Shop<span className="text-primary">Lite</span>
+          </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <label style={{ fontSize: 14 }}>Username</label>
-          <input
-            name="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            style={{
-              padding: "8px 10px",
-              borderRadius: 8,
-              border: "1px solid #d4d4d8",
-              fontSize: 14
-            }}
-          />
-        </div>
+          <div>
+            <h1 className="text-base font-semibold mb-1">Create your account</h1>
+            <p className="text-xs text-slate-500 dark:text-text-secondary">
+              Register sebagai user, lalu login untuk masuk ke dasbor.
+            </p>
+          </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <label style={{ fontSize: 14 }}>Gmail</label>
-          <input
-            type="email"
-            name="gmail"
-            value={gmail}
-            autoComplete="email"
-            onChange={(e) => setGmail(e.target.value)}
-            style={{
-              padding: "8px 10px",
-              borderRadius: 8,
-              border: "1px solid #d4d4d8",
-              fontSize: 14
-            }}
-          />
-        </div>
+          <div className="grid gap-1">
+            <label className="text-xs">Username</label>
+            <input
+              className="input"
+              name="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Username"
+            />
+          </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <label style={{ fontSize: 14 }}>Password</label>
-          <input
-            type="password"
-            name="password"
-            autoComplete="new-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            style={{
-              padding: "8px 10px",
-              borderRadius: 8,
-              border: "1px solid #d4d4d8",
-              fontSize: 14
-            }}
-          />
-        </div>
+          <div className="grid gap-1">
+            <label className="text-xs">Gmail</label>
+            <input
+              className="input"
+              type="email"
+              name="gmail"
+              value={gmail}
+              onChange={(e) => setGmail(e.target.value)}
+              placeholder="nama@gmail.com"
+            />
+          </div>
 
-        <button
-          type="submit"
-          className="w-full"
-          style={{
-            width: "100%",
-            padding: "10px 12px",
-            borderRadius: 8,
-            border: "none",
-            background: "#4f46e5",
-            color: "white",
-            fontWeight: 600,
-            cursor: "pointer",
-            fontSize: 14
-          }}
-        >
-          Create account
-        </button>
+          <div className="grid gap-1">
+            <label className="text-xs">Password</label>
+            <input
+              className="input"
+              type="password"
+              name="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
+              placeholder="Minimal 6 karakter"
+            />
+          </div>
 
-        <p style={{ fontSize: 13 }}>
-          Already have an account?{" "}
-          <Link href="/auth/login" style={{ fontWeight: 600 }}>
-            Sign in
-          </Link>
-        </p>
-      </form>
-    </AuthLayout>
+          {errorMsg && (
+            <p className="text-xs text-red-500">
+              {errorMsg}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            className="btn-primary w-full text-xs"
+            disabled={loading}
+          >
+            {loading ? "Membuat akun..." : "Create account"}
+          </button>
+
+          <p className="text-xs text-slate-600 dark:text-text-secondary">
+            Already have an account?{" "}
+            <Link href="/auth/login" className="underline font-semibold">
+              Sign in
+            </Link>
+          </p>
+        </form>
+      </div>
+    </div>
   );
 }

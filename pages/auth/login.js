@@ -1,178 +1,142 @@
 // pages/auth/login.js
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { auth, db } from "../../lib/firebase";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { collection, getDocs, query, where, doc, getDoc } from "firebase/firestore";
 import { useRouter } from "next/router";
-import { useAuth, useNotification } from "../_app";
+import Link from "next/link";
 
-function AuthLayout({ children }) {
-  return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#f4f4f5",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "16px"
-      }}
-    >
-      <div
-        style={{
-          background: "white",
-          borderRadius: 16,
-          padding: "24px 24px 28px",
-          boxShadow: "0 20px 40px rgba(0,0,0,0.08)",
-          width: "100%",
-          maxWidth: 420
-        }}
-      >
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function Logo() {
-  return (
-    <div style={{ fontWeight: 700, fontSize: 18 }}>
-      <span style={{ color: "#4f46e5" }}>My</span>Shop
-    </div>
-  );
-}
-
-export default function LoginPage() {
+export default function Login() {
   const router = useRouter();
-  const { login, user, claims, authLoading } = useAuth();
-  const { showNotification } = useNotification();
-
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
-  // Prefill email jika datang dari register (?email=)
   useEffect(() => {
     if (router.query.email && typeof router.query.email === "string") {
-      setEmail(router.query.email);
+      setIdentifier(router.query.email);
     }
   }, [router.query.email]);
 
-  // Kalau sudah login → langsung ke dashboard sesuai role
-  useEffect(() => {
-    if (!authLoading && user) {
-      const isAdmin = claims?.isAdmin === true;
-      router.replace(isAdmin ? "/admins/home" : "/home");
-    }
-  }, [authLoading, user, claims, router]);
-
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMsg("");
 
-    if (!email || !password) {
-      showNotification("error", "Email dan password wajib diisi.");
-      return;
-    }
-
-    if (password.length < 8) {
-      showNotification("error", "Password minimal 8 karakter.");
+    if (!identifier || !password) {
+      setErrorMsg("Semua field wajib diisi.");
       return;
     }
 
     try {
-      const result = await login(email, password);
-      const isAdmin = result.claims?.isAdmin === true;
+      setLoading(true);
 
-      showNotification(
-        "success",
-        isAdmin ? "Login sebagai admin berhasil." : "Login sebagai user berhasil."
-      );
+      let emailToUse = identifier;
 
-      router.push(isAdmin ? "/admins/home" : "/home");
+      if (!identifier.includes("@")) {
+        // dianggap username → cari email di Firestore
+        const q = query(
+          collection(db, "users"),
+          where("username", "==", identifier)
+        );
+        const snap = await getDocs(q);
+        if (snap.empty) {
+          throw new Error("Username tidak ditemukan.");
+        }
+        const userData = snap.docs[0].data();
+        emailToUse = userData.email;
+      }
+
+      const res = await signInWithEmailAndPassword(auth, emailToUse, password);
+      const user = res.user;
+
+      // cek role
+      const ref = doc(db, "users", user.uid);
+      const userSnap = await getDoc(ref);
+      if (!userSnap.exists()) {
+        throw new Error("Data user tidak ditemukan di Firestore.");
+      }
+      const data = userSnap.data();
+
+      if (data.role === "admins") {
+        router.push("/dasboradmins");
+      } else {
+        // default ke users
+        router.push("/dasborUser");
+      }
     } catch (err) {
       console.error(err);
-      showNotification("error", err.message || "Gagal login.");
+      setErrorMsg(err.message || "Gagal login.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <AuthLayout>
-      <form
-        onSubmit={handleSubmit}
-        method="POST"
-        className="grid w-full max-w-sm grid-cols-1 gap-8"
-        style={{ display: "grid", gap: 20 }}
-      >
-        <Logo />
-        <h1 style={{ fontSize: 22, fontWeight: 600 }}>Sign in to your account</h1>
+    <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-bg-dark text-slate-900 dark:text text-sm">
+      <div className="w-full max-w-sm card">
+        <form onSubmit={handleSubmit} className="grid gap-5">
+          {/* Logo text */}
+          <div className="font-semibold text-lg tracking-tight">
+            Shop<span className="text-primary">Lite</span>
+          </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <label style={{ fontSize: 14 }}>Email</label>
-          <input
-            type="email"
-            name="email"
-            value={email}
-            autoComplete="email"
-            onChange={(e) => setEmail(e.target.value)}
-            style={{
-              padding: "8px 10px",
-              borderRadius: 8,
-              border: "1px solid #d4d4d8",
-              fontSize: 14
-            }}
-          />
-        </div>
+          <div>
+            <h1 className="text-base font-semibold mb-1">Sign in to your account</h1>
+            <p className="text-xs text-slate-500 dark:text-text-secondary">
+              Gunakan email atau username yang sudah terdaftar.
+            </p>
+          </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          <label style={{ fontSize: 14 }}>Password</label>
-          <input
-            type="password"
-            name="password"
-            value={password}
-            autoComplete="current-password"
-            onChange={(e) => setPassword(e.target.value)}
-            style={{
-              padding: "8px 10px",
-              borderRadius: 8,
-              border: "1px solid #d4d4d8",
-              fontSize: 14
-            }}
-          />
-        </div>
+          <div className="grid gap-1">
+            <label className="text-xs">Email atau username</label>
+            <input
+              className="input"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              placeholder="email atau username"
+            />
+          </div>
 
-        <div
-          className="flex items-center justify-between"
-          style={{ display: "flex", justifyContent: "space-between" }}
-        >
-          <span style={{ fontSize: 13 }}>
-            <Link href="/auth/forgot" style={{ fontWeight: 600 }}>
+          <div className="grid gap-1">
+            <label className="text-xs">Password</label>
+            <input
+              className="input"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+            />
+          </div>
+
+          <div className="flex items-center justify-between text-xs">
+            <Link href="/auth/forgot" className="underline font-semibold">
               Forgot password?
             </Link>
-          </span>
-        </div>
+          </div>
 
-        <button
-          type="submit"
-          className="w-full"
-          style={{
-            width: "100%",
-            padding: "10px 12px",
-            borderRadius: 8,
-            border: "none",
-            background: "#4f46e5",
-            color: "white",
-            fontWeight: 600,
-            cursor: "pointer",
-            fontSize: 14
-          }}
-        >
-          Login
-        </button>
+          {errorMsg && (
+            <p className="text-xs text-red-500">
+              {errorMsg}
+            </p>
+          )}
 
-        <p style={{ fontSize: 13 }}>
-          Don’t have an account?{" "}
-          <Link href="/auth/register" style={{ fontWeight: 600 }}>
-            Sign up
-          </Link>
-        </p>
-      </form>
-    </AuthLayout>
+          <button
+            type="submit"
+            className="btn-primary w-full text-xs"
+            disabled={loading}
+          >
+            {loading ? "Memproses..." : "Login"}
+          </button>
+
+          <p className="text-xs text-slate-600 dark:text-text-secondary">
+            Don’t have an account?{" "}
+            <Link href="/auth/register" className="underline font-semibold">
+              Sign up
+            </Link>
+          </p>
+        </form>
+      </div>
+    </div>
   );
 }
