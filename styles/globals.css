@@ -13,7 +13,9 @@
 }
 
 body {
-  @apply bg-slate-100 text-slate-900;
+  @apply text-sm;
+  background-color: #e5e7eb;            /* bg-slate-100 */
+  color: #0f172a;                       /* text-slate-900 */
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
@@ -22,21 +24,22 @@ body {
   color: var(--text);
 }
 
-/* form dan card basic */
+/* kartu umum */
 .card {
-  @apply rounded-xl shadow-lg p-6;
-  background-color: white;
+  @apply rounded-xl shadow-lg p-6 border;
+  background-color: #ffffff;
+  border-color: #e5e7eb;
 }
 
 .dark .card {
   background-color: var(--card-dark);
+  border-color: #1f2937;
 }
 
-/* input style */
+/* input umum */
 .input {
-  @apply w-full rounded-lg px-3 py-2 text-sm outline-none;
+  @apply w-full rounded-lg px-3 py-2 text-sm outline-none bg-transparent;
   border: 1px solid var(--input-border);
-  background-color: transparent;
   color: inherit;
 }
 
@@ -44,10 +47,11 @@ body {
   color: var(--input-placeholder);
 }
 
+/* button utama */
 .btn-primary {
   @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium;
   background-color: var(--primary);
-  color: white;
+  color: #ffffff;
 }
 
 .btn-primary:disabled {
