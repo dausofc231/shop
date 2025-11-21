@@ -10,7 +10,7 @@ export default function DasborAdmins() {
   const router = useRouter();
   const [adminData, setAdminData] = useState(null);
   const [checking, setChecking] = useState(true);
-  const [theme, setTheme] = useState("light");
+  const [theme, setTheme] = useState("dark");
 
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
@@ -21,8 +21,8 @@ export default function DasborAdmins() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("theme");
-      if (stored === "dark") setTheme("dark");
+      const stored = localStorage.getItem("theme") || "dark";
+      setTheme(stored);
     }
   }, []);
 
@@ -52,7 +52,6 @@ export default function DasborAdmins() {
         }
         const data = snap.data();
         if (data.role !== "admins") {
-          // kalau bukan admin kirim ke dasbor user
           router.replace("/dasborUser");
           return;
         }
@@ -109,7 +108,7 @@ export default function DasborAdmins() {
 
   if (checking) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-bg-dark text-sm">
+      <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-bg-dark text-sm text-slate-900 dark:text-[var(--text)]">
         <p>Memeriksa sesi admin...</p>
       </div>
     );
@@ -118,24 +117,24 @@ export default function DasborAdmins() {
   if (!adminData) return null;
 
   return (
-    <div className="min-h-screen bg-slate-100 dark:bg-bg-dark text-slate-900 dark:text text-sm">
+    <div className="min-h-screen bg-slate-100 dark:bg-bg-dark text-slate-900 dark:text-[var(--text)] text-sm">
       {/* NAVBAR */}
       <header className="w-full border-b border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-bg-dark/80 backdrop-blur sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="font-semibold text-lg tracking-tight">
+          <div className="font-semibold text-lg tracking-tight text-slate-900 dark:text-[var(--text)]">
             Shop<span className="text-primary">Lite</span> Admin
           </div>
           <div className="flex items-center gap-4 text-xs">
             <button
               type="button"
               onClick={toggleTheme}
-              className="px-3 py-1 border rounded-lg text-xs border-slate-300 dark:border-slate-600"
+              className="px-3 py-1 border rounded-lg text-xs border-slate-300 dark:border-slate-600 text-slate-800 dark:text-[var(--text)] bg-white dark:bg-card-dark"
             >
               {theme === "dark" ? "Mode terang" : "Mode gelap"}
             </button>
             <button
               type="button"
-              className="px-3 py-1 border rounded-lg text-xs border-slate-300 dark:border-slate-600"
+              className="px-3 py-1 border rounded-lg text-xs border-slate-300 dark:border-slate-600 text-slate-800 dark:text-[var(--text)] bg-white dark:bg-card-dark"
             >
               Menu
             </button>
@@ -145,9 +144,12 @@ export default function DasborAdmins() {
 
       <main className="max-w-5xl mx-auto px-4 py-8">
         <div className="card mb-6">
-          <h1 className="text-lg font-semibold mb-2">Dasbor Admin</h1>
-          <p className="text-xs text-slate-600 dark:text-text-secondary mb-4">
-            Role: <span className="font-semibold">{adminData.role}</span> | {adminData.email}
+          <h1 className="text-lg font-semibold mb-2 text-slate-900 dark:text-[var(--text)]">
+            Dasbor Admin
+          </h1>
+          <p className="text-xs text-slate-600 dark:text-[var(--text-secondary)] mb-4">
+            Role: <span className="font-semibold">{adminData.role}</span> |{" "}
+            {adminData.email}
           </p>
 
           <div className="mb-4 flex gap-2 text-xs">
@@ -156,7 +158,7 @@ export default function DasborAdmins() {
             </Link>
             <button
               onClick={handleLogout}
-              className="w-full px-4 py-2 text-xs rounded-lg border border-red-500 text-red-500"
+              className="w-full px-4 py-2 text-xs rounded-lg border border-red-500 text-red-500 bg-transparent"
             >
               Logout
             </button>
@@ -164,10 +166,14 @@ export default function DasborAdmins() {
         </div>
 
         <div className="card">
-          <h2 className="text-sm font-semibold mb-4">Tambah Produk</h2>
+          <h2 className="text-sm font-semibold mb-4 text-slate-900 dark:text-[var(--text)]">
+            Tambah Produk
+          </h2>
           <form onSubmit={handleAddProduct} className="grid gap-4">
             <div className="grid gap-1">
-              <label className="text-xs">Nama Produk</label>
+              <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                Nama Produk
+              </label>
               <input
                 className="input"
                 value={name}
@@ -176,7 +182,9 @@ export default function DasborAdmins() {
               />
             </div>
             <div className="grid gap-1">
-              <label className="text-xs">Harga</label>
+              <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                Harga
+              </label>
               <input
                 className="input"
                 type="number"
@@ -186,7 +194,9 @@ export default function DasborAdmins() {
               />
             </div>
             <div className="grid gap-1">
-              <label className="text-xs">Kategori (opsional)</label>
+              <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                Kategori (opsional)
+              </label>
               <input
                 className="input"
                 value={category}
@@ -195,7 +205,9 @@ export default function DasborAdmins() {
               />
             </div>
             <div className="grid gap-1">
-              <label className="text-xs">Deskripsi (opsional)</label>
+              <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                Deskripsi (opsional)
+              </label>
               <textarea
                 className="input min-h-[80px]"
                 value={description}
@@ -205,11 +217,17 @@ export default function DasborAdmins() {
             </div>
 
             <div className="flex items-center justify-between mt-2">
-              <button type="submit" className="btn-primary text-xs" disabled={saving}>
+              <button
+                type="submit"
+                className="btn-primary text-xs"
+                disabled={saving}
+              >
                 {saving ? "Menyimpan..." : "Tambah Produk"}
               </button>
               {message && (
-                <p className="text-xs text-slate-600 dark:text-text-secondary">{message}</p>
+                <p className="text-xs text-slate-600 dark:text-[var(--text-secondary)]">
+                  {message}
+                </p>
               )}
             </div>
           </form>

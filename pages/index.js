@@ -21,27 +21,26 @@ export default function Home() {
   const [theme, setTheme] = useState("dark");
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [showAvatarInput, setShowAvatarInput] = useState(false);
 
   const [currentUser, setCurrentUser] = useState(null);
   const [userDoc, setUserDoc] = useState(null);
   const [avatarInput, setAvatarInput] = useState("");
   const [savingAvatar, setSavingAvatar] = useState(false);
 
-  // sync theme state dengan html class + localStorage
+  // ambil theme dari localStorage
   useEffect(() => {
     if (typeof window === "undefined") return;
     const stored = localStorage.getItem("theme") || "dark";
     setTheme(stored);
   }, []);
 
+  // sinkron theme ke html
   useEffect(() => {
     if (typeof window === "undefined") return;
     const root = document.documentElement;
-    if (theme === "dark") {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
+    if (theme === "dark") root.classList.add("dark");
+    else root.classList.remove("dark");
     localStorage.setItem("theme", theme);
   }, [theme]);
 
@@ -49,7 +48,7 @@ export default function Home() {
     setTheme((prev) => (prev === "dark" ? "light" : "dark"));
   };
 
-  // produk
+  // load produk
   useEffect(() => {
     const loadProducts = async () => {
       try {
@@ -69,13 +68,15 @@ export default function Home() {
     loadProducts();
   }, []);
 
-  // user + role
+  // cek auth + userDoc
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
       setUserDoc(null);
       setAvatarInput("");
+      setShowAvatarInput(false);
       if (!user) return;
+
       try {
         const ref = doc(db, "users", user.uid);
         const snap = await getDoc(ref);
@@ -123,27 +124,43 @@ export default function Home() {
     }
   };
 
+  const saldo = userDoc?.saldo ?? 0;
+
+  const createdDate = (() => {
+    const raw = userDoc?.createdAt;
+    if (!raw) return "-";
+    try {
+      const d = raw.toDate ? raw.toDate() : new Date(raw);
+      return new Intl.DateTimeFormat("id-ID", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      }).format(d);
+    } catch {
+      return "-";
+    }
+  })();
+
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-bg-dark text-slate-900 dark:text-[var(--text)] text-sm">
       {/* NAVBAR */}
       <header className="w-full border-b border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-bg-dark/80 backdrop-blur sticky top-0 z-20">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
-          {/* logo kiri */}
+          {/* logo */}
           <div className="font-semibold text-lg tracking-tight text-slate-900 dark:text-[var(--text)]">
             <span className="mr-0.5">Shop</span>
             <span className="text-primary">Lite</span>
           </div>
 
-          {/* kanan: darkmode, avatar (kalau login), menu */}
+          {/* kanan: darkmode + menu */}
           <div className="flex items-center gap-3">
-            {/* dark/night icon */}
+            {/* dark / light */}
             <button
               type="button"
               onClick={toggleTheme}
               className="h-9 w-9 flex items-center justify-center rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-card-dark"
               aria-label="Dark / light mode"
             >
-              {/* kalau sedang dark, tampilkan icon matahari (menandakan bisa ke light) */}
               {theme === "dark" ? (
                 <FiSun className="text-primary text-base" />
               ) : (
@@ -151,65 +168,7 @@ export default function Home() {
               )}
             </button>
 
-            {/* avatar */}
-            {currentUser && userDoc && (
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setProfileOpen((v) => !v)}
-                  className="h-9 w-9 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-card-dark overflow-hidden flex items-center justify-center"
-                >
-                  {userDoc.photoURL ? (
-                    <img
-                      src={userDoc.photoURL}
-                      alt="Avatar"
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <FiUser className="text-slate-500 dark:text-[var(--text-secondary)] text-base" />
-                  )}
-                </button>
-
-                {profileOpen && (
-                  <div className="absolute right-0 mt-2 w-64 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-card-dark p-3 z-30">
-                    <div className="mb-3">
-                      <p className="text-xs font-semibold text-slate-900 dark:text-[var(--text)]">
-                        {userDoc.username || "User"}
-                      </p>
-                      <p className="text-[11px] text-slate-500 dark:text-[var(--text-secondary)]">
-                        {userDoc.email}
-                      </p>
-                      <p className="text-[11px] mt-1 text-slate-600 dark:text-[var(--text-secondary)]">
-                        Role:{" "}
-                        <span className="font-semibold">{userDoc.role}</span>
-                      </p>
-                    </div>
-
-                    <div className="grid gap-1 mb-2">
-                      <label className="text-[11px] text-slate-700 dark:text-[var(--text-secondary)]">
-                        URL foto profil (opsional)
-                      </label>
-                      <input
-                        className="input text-[11px]"
-                        placeholder="https://..."
-                        value={avatarInput}
-                        onChange={(e) => setAvatarInput(e.target.value)}
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleSaveAvatar}
-                      disabled={savingAvatar}
-                      className="btn-primary w-full text-[11px]"
-                    >
-                      {savingAvatar ? "Menyimpan..." : "Simpan"}
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* menu */}
+            {/* garis 3 */}
             <button
               type="button"
               onClick={() => setMenuOpen(true)}
@@ -225,21 +184,59 @@ export default function Home() {
       {/* PANEL MENU */}
       {menuOpen && (
         <div className="fixed inset-0 z-30">
+          {/* overlay luar utk tutup menu */}
           <div
             className="absolute inset-0 bg-black/40"
-            onClick={() => setMenuOpen(false)}
+            onClick={() => {
+              setMenuOpen(false);
+              setProfileOpen(false);
+            }}
           />
-          <div className="absolute right-0 top-0 h-full w-64 bg-white dark:bg-card-dark shadow-xl p-4 flex flex-col gap-3">
-            <div className="mb-2">
-              <p className="font-semibold text-sm text-slate-900 dark:text-[var(--text)]">
-                Menu
-              </p>
-              <p className="text-[11px] text-slate-500 dark:text-[var(--text-secondary)]">
-                Navigasi utama aplikasi.
-              </p>
-            </div>
+          {/* panel kanan */}
+          <div className="absolute right-0 top-0 h-full w-64 bg-white dark:bg-card-dark shadow-xl p-4 flex flex-col gap-3 relative">
+            {/* ROW AKUN DI ATAS */}
+            {currentUser && userDoc ? (
+              <button
+                type="button"
+                onClick={() => setProfileOpen(true)}
+                className="w-full flex items-center gap-3 text-left"
+              >
+                <div className="h-9 w-9 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-bg-dark overflow-hidden flex items-center justify-center">
+                  {userDoc.photoURL ? (
+                    <img
+                      src={userDoc.photoURL}
+                      alt="Avatar"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <FiUser className="text-slate-500 dark:text-[var(--text-secondary)] text-base" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs font-semibold text-slate-900 dark:text-[var(--text)] line-clamp-1">
+                    {userDoc.username || "User"}
+                  </p>
+                  <p className="text-[11px] text-slate-500 dark:text-[var(--text-secondary)]">
+                    Saldo: Rp {Number(saldo).toLocaleString("id-ID")}
+                  </p>
+                </div>
+              </button>
+            ) : (
+              <div>
+                <p className="text-xs font-semibold text-slate-900 dark:text-[var(--text)]">
+                  Belum login
+                </p>
+                <p className="text-[11px] text-slate-500 dark:text-[var(--text-secondary)]">
+                  Login untuk melihat info akun.
+                </p>
+              </div>
+            )}
 
-            <nav className="flex flex-col gap-2 text-sm">
+            {/* garis pemisah */}
+            <div className="border-t border-slate-200 dark:border-slate-700 mt-2" />
+
+            {/* NAVIGASI */}
+            <nav className="flex flex-col gap-2 text-sm mt-2">
               <Link
                 href="/"
                 className="hover:underline text-slate-800 dark:text-[var(--text)]"
@@ -291,6 +288,103 @@ export default function Home() {
                 </>
               )}
             </nav>
+
+            {/* POPUP PROFIL DI DALAM PANEL */}
+            {profileOpen && currentUser && userDoc && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                {/* area klik luar popup -> tutup popup */}
+                <div
+                  className="absolute inset-0"
+                  onClick={() => {
+                    setProfileOpen(false);
+                    setShowAvatarInput(false);
+                  }}
+                />
+                {/* card popup */}
+                <div
+                  className="relative z-10 w-full max-w-xs card bg-white dark:bg-bg-dark"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* baris role & saldo */}
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-[11px] text-slate-600 dark:text-[var(--text-secondary)]">
+                      Role: <span className="font-semibold">{userDoc.role}</span>
+                    </p>
+                    <p className="text-[11px] text-slate-600 dark:text-[var(--text-secondary)]">
+                      Saldo:{" "}
+                      <span className="font-semibold">
+                        Rp {Number(saldo).toLocaleString("id-ID")}
+                      </span>
+                    </p>
+                  </div>
+
+                  {/* baris uid + icon */}
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="flex-1">
+                      <p className="text-[11px] text-slate-600 dark:text-[var(--text-secondary)]">
+                        UID: {userDoc.uid}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowAvatarInput((v) => !v)}
+                      className="h-10 w-10 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-card-dark overflow-hidden flex items-center justify-center"
+                    >
+                      {userDoc.photoURL ? (
+                        <img
+                          src={userDoc.photoURL}
+                          alt="Avatar"
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <FiUser className="text-slate-500 dark:text-[var(--text-secondary)] text-base" />
+                      )}
+                    </button>
+                  </div>
+
+                  {/* nama & gmail */}
+                  <div className="mb-2">
+                    <p className="text-xs font-semibold text-slate-900 dark:text-[var(--text)]">
+                      {userDoc.username || "User"}
+                    </p>
+                    <p className="text-[11px] text-slate-600 dark:text-[var(--text-secondary)]">
+                      {userDoc.email}
+                    </p>
+                  </div>
+
+                  {/* tgl create */}
+                  <p className="text-[11px] mb-3 text-slate-600 dark:text-[var(--text-secondary)]">
+                    Tgl create: {createdDate}
+                  </p>
+
+                  {/* input URL icon muncul kalau icon ditekan */}
+                  {showAvatarInput && (
+                    <div className="grid gap-1 mb-3">
+                      <label className="text-[11px] text-slate-700 dark:text-[var(--text-secondary)]">
+                        URL icon / foto profil
+                      </label>
+                      <input
+                        className="input text-[11px]"
+                        placeholder="https://..."
+                        value={avatarInput}
+                        onChange={(e) => setAvatarInput(e.target.value)}
+                      />
+                    </div>
+                  )}
+
+                  {showAvatarInput && (
+                    <button
+                      type="button"
+                      onClick={handleSaveAvatar}
+                      disabled={savingAvatar}
+                      className="btn-primary w-full text-[11px]"
+                    >
+                      {savingAvatar ? "Menyimpan..." : "Simpan"}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -319,10 +413,7 @@ export default function Home() {
         ) : (
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
             {products.map((p) => (
-              <div
-                key={p.id}
-                className="card flex flex-col justify-between"
-              >
+              <div key={p.id} className="card flex flex-col justify-between">
                 <div>
                   <h2 className="font-semibold text-sm mb-1 text-slate-900 dark:text-[var(--text)]">
                     {p.name}
