@@ -1,5 +1,6 @@
 // pages/admins/list.js
 import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import {
   collection,
   getDocs,
@@ -9,15 +10,31 @@ import {
   query
 } from "firebase/firestore";
 import { db } from "../../lib/firebase";
+import { useAuth, useNotification } from "../_app";
 
 export default function AdminListProductsPage() {
+  const router = useRouter();
+  const { user, claims, authLoading } = useAuth();
+  const { showNotification } = useNotification();
+
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [msg, setMsg] = useState("");
+
+  // Proteksi admin
+  useEffect(() => {
+    if (!authLoading) {
+      if (!user) {
+        showNotification("error", "Harap login sebagai admin.");
+        router.replace("/auth/login");
+      } else if (!claims?.isAdmin) {
+        showNotification("error", "Anda bukan admin.");
+        router.replace("/home");
+      }
+    }
+  }, [authLoading, user, claims, router, showNotification]);
 
   const fetchProducts = async () => {
     setLoading(true);
-    setMsg("");
     try {
       const q = query(
         collection(db, "products"),
@@ -28,34 +45,37 @@ export default function AdminListProductsPage() {
       setProducts(list);
     } catch (err) {
       console.error(err);
-      setMsg("Gagal mengambil data produk: " + err.message);
+      showNotification("error", "Gagal mengambil data produk: " + err.message);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    if (!authLoading && user && claims?.isAdmin) {
+      fetchProducts();
+    }
+  }, [authLoading, user, claims]);
 
   const handleDelete = async (id) => {
     const ok = confirm("Yakin ingin menghapus produk ini?");
     if (!ok) return;
     try {
       await deleteDoc(doc(db, "products", id));
-      setMsg("Produk dihapus.");
+      showNotification("success", "Produk dihapus.");
       setProducts((prev) => prev.filter((p) => p.id !== id));
     } catch (err) {
       console.error(err);
-      setMsg("Gagal menghapus produk: " + err.message);
+      showNotification("error", "Gagal menghapus produk: " + err.message);
     }
   };
+
+  if (authLoading) return <div>Memeriksa akses admin...</div>;
 
   return (
     <div>
       <h1>Admin - List Produk</h1>
       {loading && <p>Sedang memuat...</p>}
-      {msg && <p>{msg}</p>}
       {!loading && products.length === 0 && <p>Belum ada produk.</p>}
 
       <ul style={{ listStyle: "none", padding: 0, marginTop: "16px" }}>
