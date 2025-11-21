@@ -33,11 +33,12 @@ export default function Register() {
         username,
         email: gmail,
         role: "users",
+        saldo: 0,
         createdAt: serverTimestamp(),
+        photoURL: null,
       });
 
       await signOut(auth);
-
       router.push(`/auth/login?email=${encodeURIComponent(gmail)}`);
     } catch (err) {
       console.error(err);
@@ -48,23 +49,27 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-bg-dark text-slate-900 dark:text text-sm">
+    <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-bg-dark text-slate-900 dark:text-[var(--text)] text-sm">
       <div className="w-full max-w-sm card">
         <form onSubmit={handleSubmit} className="grid gap-5">
-          {/* Logo text */}
-          <div className="font-semibold text-lg tracking-tight">
+          {/* Logo */}
+          <div className="font-semibold text-lg tracking-tight text-slate-900 dark:text-[var(--text)]">
             Shop<span className="text-primary">Lite</span>
           </div>
 
           <div>
-            <h1 className="text-base font-semibold mb-1">Create your account</h1>
-            <p className="text-xs text-slate-500 dark:text-text-secondary">
+            <h1 className="text-base font-semibold mb-1 text-slate-900 dark:text-[var(--text)]">
+              Create your account
+            </h1>
+            <p className="text-xs text-slate-500 dark:text-[var(--text-secondary)]">
               Register sebagai user, lalu login untuk masuk ke dasbor.
             </p>
           </div>
 
           <div className="grid gap-1">
-            <label className="text-xs">Username</label>
+            <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+              Username
+            </label>
             <input
               className="input"
               name="username"
@@ -75,7 +80,9 @@ export default function Register() {
           </div>
 
           <div className="grid gap-1">
-            <label className="text-xs">Gmail</label>
+            <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+              Gmail
+            </label>
             <input
               className="input"
               type="email"
@@ -87,7 +94,9 @@ export default function Register() {
           </div>
 
           <div className="grid gap-1">
-            <label className="text-xs">Password</label>
+            <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+              Password
+            </label>
             <input
               className="input"
               type="password"
@@ -113,7 +122,7 @@ export default function Register() {
             {loading ? "Membuat akun..." : "Create account"}
           </button>
 
-          <p className="text-xs text-slate-600 dark:text-text-secondary">
+          <p className="text-xs text-slate-600 dark:text-[var(--text-secondary)]">
             Already have an account?{" "}
             <Link href="/auth/login" className="underline font-semibold">
               Sign in

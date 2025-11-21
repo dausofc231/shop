@@ -34,7 +34,6 @@ export default function Login() {
       let emailToUse = identifier;
 
       if (!identifier.includes("@")) {
-        // dianggap username → cari email di Firestore
         const q = query(
           collection(db, "users"),
           where("username", "==", identifier)
@@ -50,7 +49,6 @@ export default function Login() {
       const res = await signInWithEmailAndPassword(auth, emailToUse, password);
       const user = res.user;
 
-      // cek role
       const ref = doc(db, "users", user.uid);
       const userSnap = await getDoc(ref);
       if (!userSnap.exists()) {
@@ -61,7 +59,6 @@ export default function Login() {
       if (data.role === "admins") {
         router.push("/dasboradmins");
       } else {
-        // default ke users
         router.push("/dasborUser");
       }
     } catch (err) {
@@ -73,23 +70,26 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-bg-dark text-slate-900 dark:text text-sm">
+    <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-bg-dark text-slate-900 dark:text-[var(--text)] text-sm">
       <div className="w-full max-w-sm card">
         <form onSubmit={handleSubmit} className="grid gap-5">
-          {/* Logo text */}
-          <div className="font-semibold text-lg tracking-tight">
+          <div className="font-semibold text-lg tracking-tight text-slate-900 dark:text-[var(--text)]">
             Shop<span className="text-primary">Lite</span>
           </div>
 
           <div>
-            <h1 className="text-base font-semibold mb-1">Sign in to your account</h1>
-            <p className="text-xs text-slate-500 dark:text-text-secondary">
+            <h1 className="text-base font-semibold mb-1 text-slate-900 dark:text-[var(--text)]">
+              Sign in to your account
+            </h1>
+            <p className="text-xs text-slate-500 dark:text-[var(--text-secondary)]">
               Gunakan email atau username yang sudah terdaftar.
             </p>
           </div>
 
           <div className="grid gap-1">
-            <label className="text-xs">Email atau username</label>
+            <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+              Email atau username
+            </label>
             <input
               className="input"
               value={identifier}
@@ -99,7 +99,9 @@ export default function Login() {
           </div>
 
           <div className="grid gap-1">
-            <label className="text-xs">Password</label>
+            <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+              Password
+            </label>
             <input
               className="input"
               type="password"
@@ -110,7 +112,10 @@ export default function Login() {
           </div>
 
           <div className="flex items-center justify-between text-xs">
-            <Link href="/auth/forgot" className="underline font-semibold">
+            <Link
+              href="/auth/forgot"
+              className="underline font-semibold text-primary"
+            >
               Forgot password?
             </Link>
           </div>
@@ -129,7 +134,7 @@ export default function Login() {
             {loading ? "Memproses..." : "Login"}
           </button>
 
-          <p className="text-xs text-slate-600 dark:text-text-secondary">
+          <p className="text-xs text-slate-600 dark:text-[var(--text-secondary)]">
             Don’t have an account?{" "}
             <Link href="/auth/register" className="underline font-semibold">
               Sign up
