@@ -8,7 +8,7 @@ export default function IndexPage() {
   useEffect(() => {
     const timer = setTimeout(() => {
       router.push("/home");
-    }, 1500); // 1.5 detik loading
+    }, 1500);
     return () => clearTimeout(timer);
   }, [router]);
 
@@ -23,7 +23,7 @@ export default function IndexPage() {
         gap: "8px"
       }}
     >
-      <div style={{ fontSize: "24px", fontWeight: "bold" }}>Loading...</div>
+      <div style={{ fontSize: 24, fontWeight: "bold" }}>Loading...</div>
       <div>mengalihkan ke katalog produk</div>
     </div>
   );
