@@ -142,6 +142,7 @@ export default function DasborAdmins() {
     const val = imageInput.trim();
     if (!val) return;
 
+    // wajib http / https
     if (!/^https?:\/\//i.test(val)) {
       setUrlError("URL harus diawali dengan http:// atau https://");
       return;
@@ -150,6 +151,7 @@ export default function DasborAdmins() {
 
     setImages((prev) => [...prev, val]);
     setImageInput("");
+    // balik fokus ke input url
     setTimeout(() => {
       if (imageInputRef.current) imageInputRef.current.focus();
     }, 0);
@@ -192,7 +194,7 @@ export default function DasborAdmins() {
     setCategories((prev) => prev.filter((c) => c !== cat));
   };
 
-  // === FORM TAMBAHAN FIELD ===
+  // === FORM TAMBAHAN FIELD (WhatsApp, dll) ===
   const addExtraField = () => {
     const label = extraFieldInput.trim();
     if (!label) return;
@@ -277,6 +279,7 @@ export default function DasborAdmins() {
     try {
       setSaving(true);
 
+      // label otomatis: diskon + baru
       let finalLabels = [];
       if (discountNumber > 0) finalLabels.push("diskon");
       finalLabels.push("baru");
@@ -396,37 +399,43 @@ export default function DasborAdmins() {
               />
             </div>
 
-            {/* Harga + Diskon DALAM SATU BLOK */}
-            <div className="grid gap-1">
-              <div className="flex justify-between text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                <span>Harga (Rp)</span>
-                <span>Diskon</span>
-              </div>
-              <div className="flex items-center gap-3">
-                {/* Harga */}
-                <div className="flex items-center rounded-xl border border-slate-300 dark:border-slate-600 bg-white/80 dark:bg-bg-dark px-3 py-2 text-xs flex-1">
-                  <span className="mr-2 text-slate-500 dark:text-[var(--text-secondary)]">
+            {/* Harga + Diskon satu baris kanan kiri */}
+            <div className="grid grid-cols-2 gap-3">
+              {/* Harga */}
+              <div className="grid gap-1">
+                <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                  Harga (Rp)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-[var(--text-secondary)]">
                     Rp
                   </span>
                   <input
-                    className="flex-1 bg-transparent outline-none border-none"
+                    className="input pl-12"
                     value={priceInput}
                     onChange={handlePriceChange}
                     placeholder="1.000"
                   />
                 </div>
+              </div>
 
-                {/* Diskon kecil */}
-                <div className="flex items-center rounded-xl border border-slate-300 dark:border-slate-600 bg-white/80 dark:bg-bg-dark px-3 py-2 text-xs w-[90px] justify-center">
-                  <input
-                    className="bg-transparent outline-none border-none w-8 text-right"
-                    value={discountInput}
-                    onChange={handleDiscountChange}
-                    placeholder="0"
-                  />
-                  <span className="ml-1 text-slate-500 dark:text-[var(--text-secondary)]">
-                    %
-                  </span>
+              {/* Diskon */}
+              <div className="grid gap-1 items-end">
+                <div>
+                  <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                    Diskon
+                  </label>
+                  <div className="relative mt-1">
+                    <input
+                      className="input pr-8 w-[100px] sm:w-[120px]"
+                      value={discountInput}
+                      onChange={handleDiscountChange}
+                      placeholder="0"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-[var(--text-secondary)]">
+                      %
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -439,7 +448,7 @@ export default function DasborAdmins() {
               <input
                 className="input"
                 value={stockInput}
-                onChange={(e) => setStockInput(e.target.value)}
+                onChange={handleStockChange}
                 placeholder="25"
               />
             </div>
@@ -450,6 +459,7 @@ export default function DasborAdmins() {
                 Foto produk (URL) – tekan Enter, atau ketuk di luar input untuk
                 menambah (wajib http:// atau https://)
               </label>
+              {/* kolom input */}
               <div className="input">
                 <input
                   ref={imageInputRef}
@@ -468,6 +478,7 @@ export default function DasborAdmins() {
               {urlError && (
                 <p className="text-[10px] text-red-400 mt-1">{urlError}</p>
               )}
+              {/* chip slider bawah kolom */}
               {images.length > 0 && (
                 <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
                   {images.map((url) => (
@@ -492,7 +503,7 @@ export default function DasborAdmins() {
               </p>
             </div>
 
-            {/* KATEGORI */}
+            {/* KATEGORI – sekarang di bawah URL */}
             <div className="grid gap-1">
               <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
                 Katalog / kategori – tekan Enter untuk menambah beberapa kategori
@@ -532,7 +543,7 @@ export default function DasborAdmins() {
               )}
             </div>
 
-            {/* Form tambahan */}
+            {/* Form tambahan (WhatsApp, dll) */}
             <div className="grid gap-1">
               <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
                 Form tambahan (contoh: WhatsApp, Link Toko, dll) – ketik nama
@@ -620,7 +631,7 @@ export default function DasborAdmins() {
               )}
             </div>
 
-            {/* Wajib login */}
+            {/* Wajib login checkbox – paling bawah sebelum tombol */}
             <div className="grid gap-1">
               <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
                 Akses produk
