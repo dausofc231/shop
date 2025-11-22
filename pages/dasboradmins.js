@@ -270,7 +270,7 @@ export default function DasborAdmins() {
 
   if (!adminData) return null;
 
-  // === HITUNG HASIL HARGA SETELAH DISKON (UNTUK DITAMPILKAN SAJA) ===
+  // === HITUNG HASIL HARGA SETELAH DISKON UNTUK PREVIEW ===
   const basePriceDigits = priceInput.replace(/\D/g, "");
   const discountNumberPreview = discountInput ? Number(discountInput) : 0;
   let finalPricePreview = "";
@@ -368,12 +368,13 @@ export default function DasborAdmins() {
                 <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
                   Harga (Nominal)
                 </label>
-                <div className="input flex items-center gap-2">
-                  <span className="pl-2 text-xs text-slate-500 dark:text-[var(--text-secondary)]">
-                    Rp
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-[var(--text-secondary)]">
+                    {/* ada spasi di sini */}
+                    {"Rp\u00A0"}
                   </span>
                   <input
-                    className="flex-1 bg-transparent border-none outline-none text-sm"
+                    className="input pl-14"
                     value={priceInput}
                     onChange={handlePriceChange}
                     placeholder="1.000"
@@ -386,30 +387,30 @@ export default function DasborAdmins() {
                 <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
                   Diskon (%)
                 </label>
-                <div className="flex items-center gap-1 mt-1 sm:mt-0">
+                <div className="relative">
                   <input
-                    className="input w-[70px] text-right"
+                    className="input pr-8 w-[80px]"
                     value={discountInput}
                     onChange={handleDiscountChange}
                     placeholder="0"
                   />
-                  <span className="text-xs text-slate-500 dark:text-[var(--text-secondary)]">
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-[var(--text-secondary)]">
                     %
                   </span>
                 </div>
               </div>
 
-              {/* Hasil Setelah Diskon (readonly, abu-abu) */}
+              {/* Harga Setelah Diskon (Hasil) */}
               <div className="grid gap-1">
                 <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
                   Harga Setelah Diskon (Hasil)
                 </label>
-                <div className="input flex items-center gap-2 bg-slate-200 dark:bg-slate-800">
-                  <span className="pl-2 text-xs text-slate-500 dark:text-[var(--text-secondary)]">
-                    Rp
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-[var(--text-secondary)]">
+                    {"Rp\u00A0"}
                   </span>
                   <input
-                    className="flex-1 bg-transparent border-none outline-none text-sm text-slate-500 dark:text-slate-400 cursor-not-allowed"
+                    className="input pl-14 bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed"
                     value={finalPricePreview}
                     disabled
                     readOnly
