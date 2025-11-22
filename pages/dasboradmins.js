@@ -19,7 +19,7 @@ export default function DasborAdmins() {
   const [checking, setChecking] = useState(true);
   const [theme, setTheme] = useState("dark");
 
-  // form state
+  // form state baru
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
@@ -40,7 +40,7 @@ export default function DasborAdmins() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
-  // THEME INIT
+  // THEME INIT (ambil dari localStorage)
   useEffect(() => {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("theme") || "dark";
@@ -48,7 +48,7 @@ export default function DasborAdmins() {
     }
   }, []);
 
-  // THEME APPLY
+  // THEME APPLY (pasang class .dark di <html>)
   useEffect(() => {
     const root = document.documentElement;
     if (theme === "dark") {
@@ -64,7 +64,7 @@ export default function DasborAdmins() {
     setTheme((prev) => (prev === "dark" ? "light" : "dark"));
   };
 
-  // AUTH CHECK
+  // AUTH CHECK ROLE ADMIN
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (!user) {
@@ -99,7 +99,7 @@ export default function DasborAdmins() {
     router.push("/");
   };
 
-  // helper: tambah tag kategori
+  // helper kategori (katalog) – Enter → jadi chip
   const handleCategoryKeyDown = (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -116,7 +116,7 @@ export default function DasborAdmins() {
     setCategories((prev) => prev.filter((c) => c !== cat));
   };
 
-  // helper: tambah main image
+  // helper foto utama
   const handleMainImageKeyDown = (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -131,7 +131,7 @@ export default function DasborAdmins() {
     setMainImages((prev) => prev.filter((u) => u !== url));
   };
 
-  // helper: tambah extra image
+  // helper foto tambahan
   const handleExtraImageKeyDown = (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -215,8 +215,7 @@ export default function DasborAdmins() {
           <div className="font-semibold text-lg tracking-tight text-slate-900 dark:text-[var(--text)]">
             Shop<span className="text-primary">Lite</span> Admin
           </div>
-
-          {/* hanya darkmode icon */}
+          {/* darkmode icon bulat */}
           <button
             type="button"
             onClick={toggleTheme}
@@ -233,8 +232,9 @@ export default function DasborAdmins() {
       </header>
 
       <main className="max-w-5xl mx-auto px-4 py-8">
-        {/* FORM TAMBAH PRODUK */}
+        {/* SATU CARD BESAR: header + form tambah produk */}
         <div className="card">
+          {/* header dalam card */}
           <div className="flex items-start justify-between gap-2 mb-4">
             <div>
               <h1 className="text-lg font-semibold mb-1 text-slate-900 dark:text-[var(--text)]">
@@ -261,6 +261,7 @@ export default function DasborAdmins() {
             </div>
           </div>
 
+          {/* FORM */}
           <form onSubmit={handleAddProduct} className="grid gap-4">
             {/* Nama */}
             <div className="grid gap-1">
@@ -328,7 +329,7 @@ export default function DasborAdmins() {
               </div>
             </div>
 
-            {/* Foto produk (multi) */}
+            {/* Foto produk (bisa banyak) */}
             <div className="grid gap-1">
               <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
                 Foto produk (URL) – tekan Enter untuk menambah beberapa foto
@@ -361,7 +362,7 @@ export default function DasborAdmins() {
               )}
             </div>
 
-            {/* Foto tambahan (multi) */}
+            {/* Foto tambahan */}
             <div className="grid gap-1">
               <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
                 Foto tambahan (URL) – opsional
@@ -434,7 +435,7 @@ export default function DasborAdmins() {
               </div>
             </div>
 
-            {/* Katalog / kategori (multi tag) */}
+            {/* Katalog / kategori */}
             <div className="grid gap-1">
               <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
                 Katalog / kategori – tekan Enter untuk menambah beberapa kategori
