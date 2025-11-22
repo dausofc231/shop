@@ -26,6 +26,9 @@ export default function DasborAdmins() {
   const [checking, setChecking] = useState(true);
   const [theme, setTheme] = useState("dark");
 
+  // state flip card
+  const [isFlipped, setIsFlipped] = useState(false);
+
   // form state
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -289,35 +292,10 @@ export default function DasborAdmins() {
           <div className="font-semibold text-lg tracking-tight text-slate-900 dark:text-[var(--text)]">
             Shop<span className="text-primary">Lite</span> Admin
           </div>
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className="h-9 w-9 flex items-center justify-center rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-card-dark"
-            aria-label="Dark / light mode"
-          >
-            {theme === "dark" ? (
-              <FiSun className="text-primary" />
-            ) : (
-              <FiMoon className="text-slate-700" />
-            )}
-          </button>
-        </div>
-      </header>
 
-      <main className="max-w-5xl mx-auto px-4 py-8">
-        <div className="card">
-          {/* header card */}
-          <div className="flex items-start justify-between gap-2 mb-4">
-            <div>
-              <h1 className="text-lg font-semibold mb-1 text-slate-900 dark:text-[var(--text)]">
-                Tambah Produk
-              </h1>
-              <p className="text-xs text-slate-600 dark:text-[var(--text-secondary)]">
-                Role: <span className="font-semibold">{adminData.role}</span> |{" "}
-                {adminData.email}
-              </p>
-            </div>
-            <div className="flex flex-col gap-2 text-xs">
+          <div className="flex items-center gap-3">
+            {/* Home / Katalog & Logout DIPISAH dari card */}
+            <div className="flex flex-col gap-1 text-xs">
               <Link
                 href="/"
                 className="px-3 py-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-bg-dark text-slate-800 dark:text-[var(--text)] text-center"
@@ -331,233 +309,300 @@ export default function DasborAdmins() {
                 Logout
               </button>
             </div>
+
+            {/* Toggle tema */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="h-9 w-9 flex items-center justify-center rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-card-dark"
+              aria-label="Dark / light mode"
+            >
+              {theme === "dark" ? (
+                <FiSun className="text-primary" />
+              ) : (
+                <FiMoon className="text-slate-700" />
+              )}
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-5xl mx-auto px-4 py-8">
+        {/* HEADER TITLE + BUTTON FLIP */}
+        <div className="flex items-start justify-between gap-2 mb-4">
+          <div>
+            <h1 className="text-lg font-semibold mb-1 text-slate-900 dark:text-[var(--text)]">
+              Tambah Produk
+            </h1>
+            <p className="text-xs text-slate-600 dark:text-[var(--text-secondary)]">
+              Role: <span className="font-semibold">{adminData.role}</span> |{" "}
+              {adminData.email}
+            </p>
           </div>
 
-          {/* FORM */}
-          <form onSubmit={handleAddProduct} className="grid gap-4">
-            {/* Nama produk */}
-            <div className="grid gap-1">
-              <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                Nama produk
-              </label>
-              <input
-                className="input"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Nama produk"
-              />
+          {/* BUTTON FLIP di sebelah kanan tulisan "Tambah Produk" */}
+          <button
+            type="button"
+            onClick={() => setIsFlipped((prev) => !prev)}
+            className="px-4 py-2 rounded-xl bg-primary text-white text-xs shadow-sm active:scale-[0.98]"
+          >
+            {isFlipped ? "Tutup Form" : "Tambah Produk"}
+          </button>
+        </div>
+
+        {/* FLIP CARD WRAPPER */}
+        <div className="relative w-full">
+          <div
+            className={`relative preserve-3d transition-transform duration-500 ${
+              isFlipped ? "rotate-y-180" : ""
+            }`}
+          >
+            {/* FRONT SIDE (tanpa kolom form) */}
+            <div className="card backface-hidden">
+              <h2 className="text-sm font-semibold mb-2">
+                Informasi Tambah Produk
+              </h2>
+              <p className="text-xs text-slate-600 dark:text-[var(--text-secondary)] mb-3">
+                Tekan tombol <span className="font-semibold">Tambah Produk</span>{" "}
+                di sebelah kanan judul untuk membuka form pengisian produk baru.
+              </p>
+              <ul className="text-xs text-slate-600 dark:text-[var(--text-secondary)] list-disc list-inside space-y-1">
+                <li>Form berisi nama, deskripsi, harga, diskon, stok.</li>
+                <li>Bisa menambahkan banyak foto produk via URL.</li>
+                <li>Bisa menambahkan banyak kategori (pisah dengan Enter).</li>
+                <li>Atur apakah produk wajib login untuk dilihat/dibeli.</li>
+              </ul>
             </div>
 
-            {/* Deskripsi */}
-            <div className="grid gap-1">
-              <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                Deskripsi
-              </label>
-              <textarea
-                className="input min-h-[80px]"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Deskripsi singkat produk"
-              />
-            </div>
-
-            {/* Harga + Diskon di 1 baris, hasil di bawahnya */}
-            <div className="grid gap-3">
-              {/* Baris atas: Harga & Diskon */}
-              <div className="grid grid-cols-2 gap-4">
-                {/* Harga */}
+            {/* BACK SIDE (FORM) */}
+            <div className="card absolute inset-0 backface-hidden rotate-y-180">
+              {/* FORM */}
+              <form onSubmit={handleAddProduct} className="grid gap-4">
+                {/* Nama produk */}
                 <div className="grid gap-1">
                   <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                    Harga
+                    Nama produk
                   </label>
-                  <div className="flex">
-                    {/* Kotak Rp terpisah */}
-                    <div className="flex items-center px-3 text-xs border border-slate-300 dark:border-slate-600 rounded-l-xl rounded-r-none bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-[var(--text-secondary)]">
-                      Rp
-                    </div>
-                    <input
-                      className="input rounded-l-none flex-1"
-                      value={priceInput}
-                      onChange={handlePriceChange}
-                      placeholder="1.000"
-                    />
-                  </div>
-                </div>
-
-                {/* Diskon */}
-                <div className="grid gap-1">
-                  <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                    Diskon (%)
-                  </label>
-                  <div className="relative">
-                    <input
-                      className="input pr-10"
-                      value={discountInput}
-                      onChange={handleDiscountChange}
-                      placeholder="0"
-                    />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-[var(--text-secondary)]">
-                      %
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Baris bawah: hasil */}
-              <div className="grid gap-1">
-                <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                  Harga setelah diskon
-                </label>
-                <div className="flex">
-                  <div className="flex items-center px-3 text-xs border border-slate-300 dark:border-slate-600 rounded-l-xl rounded-r-none bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-[var(--text-secondary)]">
-                    Rp
-                  </div>
                   <input
-                    className="input rounded-l-none flex-1 bg-slate-200 dark:bg-slate-800 cursor-not-allowed"
-                    value={finalPricePreview}
-                    disabled
-                    readOnly
-                    placeholder="0"
+                    className="input"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Nama produk"
                   />
                 </div>
-              </div>
-            </div>
 
-            {/* Stok */}
-            <div className="grid gap-1">
-              <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                Stok
-              </label>
-              <input
-                className="input"
-                value={stockInput}
-                onChange={handleStockChange}
-                placeholder="25"
-              />
-            </div>
-
-            {/* Foto produk */}
-            <div className="grid gap-1">
-              <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                Foto produk (URL)
-              </label>
-              <div className="input">
-                <input
-                  ref={imageInputRef}
-                  className="bg-transparent outline-none border-none text-xs w-full"
-                  value={imageInput}
-                  onChange={(e) => setImageInput(e.target.value)}
-                  onKeyDown={handleImageKeyDown}
-                  onBlur={handleImageBlur}
-                  placeholder={
-                    images.length === 0
-                      ? "https://example.com/foto-produk.jpg"
-                      : ""
-                  }
-                />
-              </div>
-              {urlError && (
-                <p className="text-[10px] text-red-400 mt-1">{urlError}</p>
-              )}
-              {images.length > 0 && (
-                <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
-                  {images.map((url) => (
-                    <span
-                      key={url}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-200 dark:bg-slate-700 text-[10px] text-slate-800 dark:text-[var(--text)] flex-shrink-0 max-w-[150px]"
-                    >
-                      <span className="truncate">{url}</span>
-                      <button
-                        type="button"
-                        onClick={() => removeImage(url)}
-                        className="text-[10px]"
-                      >
-                        ✕
-                      </button>
-                    </span>
-                  ))}
+                {/* Deskripsi */}
+                <div className="grid gap-1">
+                  <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                    Deskripsi
+                  </label>
+                  <textarea
+                    className="input min-h-[80px]"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Deskripsi singkat produk"
+                  />
                 </div>
-              )}
-              <p className="text-[10px] text-slate-500 dark:text-[var(--text-secondary)]">
-                Minimal 1 URL foto. Format http:// atau https://
-              </p>
-            </div>
 
-            {/* Kategori */}
-            <div className="grid gap-1">
-              <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                Kategori
-              </label>
-              <div className="input">
-                <input
-                  ref={categoryInputRef}
-                  className="bg-transparent outline-none border-none text-xs w-full"
-                  value={categoryInput}
-                  onChange={(e) => setCategoryInput(e.target.value)}
-                  onKeyDown={handleCategoryKeyDown}
-                  placeholder={
-                    categories.length === 0
-                      ? "Contoh: elektronik, fashion, teknologi"
-                      : ""
-                  }
-                />
-              </div>
-              {categories.length > 0 && (
-                <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
-                  {categories.map((cat) => (
-                    <span
-                      key={cat}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-200 dark:bg-slate-700 text-[10px] text-slate-800 dark:text-[var(--text)] flex-shrink-0 max-w-[150px]"
-                    >
-                      <span className="truncate">{cat}</span>
-                      <button
-                        type="button"
-                        onClick={() => removeCategory(cat)}
-                        className="text-[10px]"
-                      >
-                        ✕
-                      </button>
-                    </span>
-                  ))}
+                {/* Harga + Diskon di 1 baris, hasil di bawahnya */}
+                <div className="grid gap-3">
+                  {/* Baris atas: Harga & Diskon */}
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Harga */}
+                    <div className="grid gap-1">
+                      <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                        Harga
+                      </label>
+                      <div className="flex">
+                        {/* Kotak Rp terpisah */}
+                        <div className="flex items-center px-3 text-xs border border-slate-300 dark:border-slate-600 rounded-l-xl rounded-r-none bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-[var(--text-secondary)]">
+                          Rp
+                        </div>
+                        <input
+                          className="input rounded-l-none flex-1"
+                          value={priceInput}
+                          onChange={handlePriceChange}
+                          placeholder="1.000"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Diskon */}
+                    <div className="grid gap-1">
+                      <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                        Diskon (%)
+                      </label>
+                      <div className="relative">
+                        <input
+                          className="input pr-10"
+                          value={discountInput}
+                          onChange={handleDiscountChange}
+                          placeholder="0"
+                        />
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-[var(--text-secondary)]">
+                          %
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Baris bawah: hasil */}
+                  <div className="grid gap-1">
+                    <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                      Harga setelah diskon
+                    </label>
+                    <div className="flex">
+                      <div className="flex items-center px-3 text-xs border border-slate-300 dark:border-slate-600 rounded-l-xl rounded-r-none bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-[var(--text-secondary)]">
+                        Rp
+                      </div>
+                      <input
+                        className="input rounded-l-none flex-1 bg-slate-200 dark:bg-slate-800 cursor-not-allowed"
+                        value={finalPricePreview}
+                        disabled
+                        readOnly
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
                 </div>
-              )}
-              <p className="text-[10px] text-slate-500 dark:text-[var(--text-secondary)]">
-                Tekan Enter untuk menambah kategori.
-              </p>
-            </div>
 
-            {/* Akses produk */}
-            <div className="grid gap-1">
-              <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                Akses produk
-              </label>
-              <label className="flex items-center gap-2 text-xs">
-                <input
-                  type="checkbox"
-                  className="accent-primary"
-                  checked={requireLogin}
-                  onChange={(e) => setRequireLogin(e.target.checked)}
-                />
-                <span>Wajib login untuk melihat / membeli produk ini</span>
-              </label>
-            </div>
+                {/* Stok */}
+                <div className="grid gap-1">
+                  <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                    Stok
+                  </label>
+                  <input
+                    className="input"
+                    value={stockInput}
+                    onChange={handleStockChange}
+                    placeholder="25"
+                  />
+                </div>
 
-            {/* FOOTER FORM */}
-            <div className="flex items-center justify-between mt-2">
-              <button
-                type="submit"
-                className="btn-primary text-xs"
-                disabled={saving}
-              >
-                {saving ? "Menyimpan..." : "Tambah Produk"}
-              </button>
-              {message && (
-                <p className="text-xs text-slate-600 dark:text-[var(--text-secondary)]">
-                  {message}
-                </p>
-              )}
+                {/* Foto produk */}
+                <div className="grid gap-1">
+                  <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                    Foto produk (URL)
+                  </label>
+                  <div className="input">
+                    <input
+                      ref={imageInputRef}
+                      className="bg-transparent outline-none border-none text-xs w-full"
+                      value={imageInput}
+                      onChange={(e) => setImageInput(e.target.value)}
+                      onKeyDown={handleImageKeyDown}
+                      onBlur={handleImageBlur}
+                      placeholder={
+                        images.length === 0
+                          ? "https://example.com/foto-produk.jpg"
+                          : ""
+                      }
+                    />
+                  </div>
+                  {urlError && (
+                    <p className="text-[10px] text-red-400 mt-1">{urlError}</p>
+                  )}
+                  {images.length > 0 && (
+                    <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+                      {images.map((url) => (
+                        <span
+                          key={url}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-200 dark:bg-slate-700 text-[10px] text-slate-800 dark:text-[var(--text)] flex-shrink-0 max-w-[150px]"
+                        >
+                          <span className="truncate">{url}</span>
+                          <button
+                            type="button"
+                            onClick={() => removeImage(url)}
+                            className="text-[10px]"
+                          >
+                            ✕
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-[10px] text-slate-500 dark:text-[var(--text-secondary)]">
+                    Minimal 1 URL foto. Format http:// atau https://
+                  </p>
+                </div>
+
+                {/* Kategori */}
+                <div className="grid gap-1">
+                  <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                    Kategori
+                  </label>
+                  <div className="input">
+                    <input
+                      ref={categoryInputRef}
+                      className="bg-transparent outline-none border-none text-xs w-full"
+                      value={categoryInput}
+                      onChange={(e) => setCategoryInput(e.target.value)}
+                      onKeyDown={handleCategoryKeyDown}
+                      placeholder={
+                        categories.length === 0
+                          ? "Contoh: elektronik, fashion, teknologi"
+                          : ""
+                      }
+                    />
+                  </div>
+                  {categories.length > 0 && (
+                    <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+                      {categories.map((cat) => (
+                        <span
+                          key={cat}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-200 dark:bg-slate-700 text-[10px] text-slate-800 dark:text-[var(--text)] flex-shrink-0 max-w-[150px]"
+                        >
+                          <span className="truncate">{cat}</span>
+                          <button
+                            type="button"
+                            onClick={() => removeCategory(cat)}
+                            className="text-[10px]"
+                          >
+                            ✕
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-[10px] text-slate-500 dark:text-[var(--text-secondary)]">
+                    Tekan Enter untuk menambah kategori.
+                  </p>
+                </div>
+
+                {/* Akses produk */}
+                <div className="grid gap-1">
+                  <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                    Akses produk
+                  </label>
+                  <label className="flex items-center gap-2 text-xs">
+                    <input
+                      type="checkbox"
+                      className="accent-primary"
+                      checked={requireLogin}
+                      onChange={(e) => setRequireLogin(e.target.checked)}
+                    />
+                    <span>Wajib login untuk melihat / membeli produk ini</span>
+                  </label>
+                </div>
+
+                {/* FOOTER FORM */}
+                <div className="flex items-center justify-between mt-2">
+                  <button
+                    type="submit"
+                    className="btn-primary text-xs"
+                    disabled={saving}
+                  >
+                    {saving ? "Menyimpan..." : "Tambah Produk"}
+                  </button>
+                  {message && (
+                    <p className="text-xs text-slate-600 dark:text-[var(--text-secondary)]">
+                      {message}
+                    </p>
+                  )}
+                </div>
+              </form>
             </div>
-          </form>
+          </div>
         </div>
       </main>
     </div>
