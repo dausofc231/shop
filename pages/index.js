@@ -398,7 +398,7 @@ export default function Home() {
                       </p>
                       <p className="text-xs text-slate-600 dark:text-[var(--text-secondary)]">
                         Saldo:{" "}
-                          <span className="font-semibold">
+                        <span className="font-semibold">
                           Rp {Number(userDoc.saldo || 0).toLocaleString("id-ID")}
                         </span>
                       </p>
@@ -627,7 +627,7 @@ export default function Home() {
               Tidak ada produk tersedia.
             </p>
           ) : (
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
+            <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(150px,1fr))]">
               {filteredProducts.map((p) => {
                 const mainImage =
                   Array.isArray(p.images) && p.images.length > 0
@@ -651,18 +651,15 @@ export default function Home() {
                     : null
                   : null;
 
-                const firstCategory =
-                  Array.isArray(p.categories) && p.categories.length > 0
-                    ? p.categories[0]
-                    : null;
+                const saving = hasDiscount ? basePrice - finalPrice : 0;
 
                 return (
                   <div
                     key={p.id}
                     className="card flex flex-col overflow-hidden"
                   >
-                    {/* IMAGE + LABELS */}
-                    <div className="relative w-full aspect-[4/3] bg-slate-200 dark:bg-slate-700">
+                    {/* IMAGE + LABEL ATAS */}
+                    <div className="relative w-full aspect-[4/3] bg-slate-200 dark:bg-slate-700 rounded-xl overflow-hidden">
                       {mainImage ? (
                         <img
                           src={mainImage}
@@ -681,17 +678,22 @@ export default function Home() {
                           {topLabel}
                         </span>
                       )}
-
-                      {/* LABEL BAWAH (DISKON) */}
-                      {hasDiscount && (
-                        <span className="absolute bottom-2 left-2 px-2 py-1 rounded-full bg-red-500/90 text-[10px] font-semibold text-white shadow-sm">
-                          -{discountPercent}%
-                        </span>
-                      )}
                     </div>
 
+                    {/* BAR DISKON PANJANG (DI ANTARA IMAGE & CONTENT) */}
+                    {hasDiscount && (
+                      <div className="mt-2 mb-1 px-3 py-1 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/40 text-[11px] font-medium text-red-600 dark:text-red-300 flex items-center justify-between">
+                        <span>Diskon {discountPercent}%</span>
+                        {saving > 0 && (
+                          <span className="text-[10px] opacity-80">
+                            Hemat Rp {saving.toLocaleString("id-ID")}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
                     {/* CONTENT */}
-                    <div className="mt-3 flex flex-col gap-1 flex-1">
+                    <div className="mt-2 flex flex-col gap-1 flex-1">
                       {/* TITLE */}
                       <h3 className="font-semibold text-sm text-slate-900 dark:text-[var(--text)] truncate">
                         {p.name}
@@ -714,15 +716,6 @@ export default function Home() {
                         <p className="text-xs text-slate-600 dark:text-[var(--text-secondary)] line-clamp-2 overflow-hidden">
                           {p.description}
                         </p>
-                      )}
-
-                      {/* KATEGORI (opsional) */}
-                      {firstCategory && (
-                        <div className="mt-2">
-                          <span className="inline-flex px-2 py-1 rounded-full border border-slate-300 dark:border-slate-600 text-[10px] text-slate-700 dark:text-[var(--text-secondary)]">
-                            {firstCategory}
-                          </span>
-                        </div>
                       )}
                     </div>
                   </div>
