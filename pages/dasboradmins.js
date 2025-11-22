@@ -400,7 +400,7 @@ export default function DasborAdmins() {
             </div>
 
             {/* Harga + Diskon satu baris kanan kiri */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4">
               {/* Harga */}
               <div className="grid gap-1">
                 <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
@@ -419,23 +419,22 @@ export default function DasborAdmins() {
                 </div>
               </div>
 
-              {/* Diskon */}
-              <div className="grid gap-1 items-end">
-                <div>
-                  <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                    Diskon
-                  </label>
-                  <div className="relative mt-1">
-                    <input
-                      className="input pr-8 w-[100px] sm:w-[120px]"
-                      value={discountInput}
-                      onChange={handleDiscountChange}
-                      placeholder="0"
-                    />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-[var(--text-secondary)]">
-                      %
-                    </span>
-                  </div>
+            {/* Diskon */}
+            <div className="grid gap-1 items-end">
+              <div>
+                <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+            Diskon
+                </label>
+                <div className="relative mt-1">
+                  <input
+                    className="input pr-8 w-[60px] sm:w-[80px]"  // diperkecil
+                    value={discountInput}
+                    onChange={handleDiscountChange}
+                    placeholder="0"
+                  />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-[var(--text-secondary)]">
+                    %
+                  </span>
                 </div>
               </div>
             </div>
