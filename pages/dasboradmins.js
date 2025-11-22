@@ -1,5 +1,5 @@
 // pages/dasboradmins.js
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { auth, db } from "../lib/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import {
@@ -36,13 +36,15 @@ export default function DasborAdmins() {
 
   const [requireLogin, setRequireLogin] = useState(true); // default wajib
 
-  // FOTO PRODUK (1 kolom, bisa banyak URL)
+  // FOTO PRODUK
   const [images, setImages] = useState([]);
   const [imageInput, setImageInput] = useState("");
+  const imageInputRef = useRef(null);
 
   // KATEGORI
   const [categories, setCategories] = useState([]);
   const [categoryInput, setCategoryInput] = useState("");
+  const categoryInputRef = useRef(null);
 
   // FORM TAMBAHAN (WhatsApp, dll)
   const [extraFieldInput, setExtraFieldInput] = useState("");
@@ -134,12 +136,16 @@ export default function DasborAdmins() {
     setDiscountInput(String(num));
   };
 
-  // === FOTO PRODUK (CHIP DALAM 1 FIELD) ===
+  // === FOTO PRODUK (CHIP) ===
   const addImage = () => {
     const val = imageInput.trim();
     if (!val) return;
     setImages((prev) => [...prev, val]);
     setImageInput("");
+    // balikin fokus ke input url
+    setTimeout(() => {
+      if (imageInputRef.current) imageInputRef.current.focus();
+    }, 0);
   };
 
   const handleImageKeyDown = (e) => {
@@ -150,7 +156,7 @@ export default function DasborAdmins() {
   };
 
   const handleImageBlur = () => {
-    // kalau user tap di luar input dan masih ada teks → auto jadikan chip
+    // kalau user tap di luar input dan masih ada teks → auto chip
     if (imageInput.trim()) {
       addImage();
     }
@@ -170,6 +176,9 @@ export default function DasborAdmins() {
         setCategories((prev) => [...prev, val]);
       }
       setCategoryInput("");
+      setTimeout(() => {
+        if (categoryInputRef.current) categoryInputRef.current.focus();
+      }, 0);
     }
   };
 
@@ -433,30 +442,17 @@ export default function DasborAdmins() {
               />
             </div>
 
-            {/* Foto produk (1 kolom, chip horizontal scroll) */}
+            {/* Foto produk */}
             <div className="grid gap-1">
               <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                Foto produk (URL) – tekan Enter, atau cukup ketuk di luar
-                input untuk menambah
+                Foto produk (URL) – tekan Enter, atau ketuk di luar input untuk
+                menambah
               </label>
-              <div className="input flex items-center gap-2 overflow-x-auto whitespace-nowrap min-h-[42px]">
-                {images.map((url) => (
-                  <span
-                    key={url}
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-200 dark:bg-slate-700 text-[10px] text-slate-800 dark:text-[var(--text)] flex-shrink-0"
-                  >
-                    {url.length > 22 ? url.slice(0, 19) + "..." : url}
-                    <button
-                      type="button"
-                      onClick={() => removeImage(url)}
-                      className="text-[10px]"
-                    >
-                      ✕
-                    </button>
-                  </span>
-                ))}
+              {/* kolom input */}
+              <div className="input">
                 <input
-                  className="bg-transparent outline-none border-none text-xs flex-shrink-0 w-40"
+                  ref={imageInputRef}
+                  className="bg-transparent outline-none border-none text-xs w-full"
                   value={imageInput}
                   onChange={(e) => setImageInput(e.target.value)}
                   onKeyDown={handleImageKeyDown}
@@ -468,6 +464,26 @@ export default function DasborAdmins() {
                   }
                 />
               </div>
+              {/* chip slider bawah kolom */}
+              {images.length > 0 && (
+                <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+                  {images.map((url) => (
+                    <span
+                      key={url}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-200 dark:bg-slate-700 text-[10px] text-slate-800 dark:text-[var(--text)] flex-shrink-0 max-w-[150px]"
+                    >
+                      <span className="truncate">{url}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeImage(url)}
+                        className="text-[10px]"
+                      >
+                        ✕
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
               <p className="text-[10px] text-slate-500 dark:text-[var(--text-secondary)]">
                 Minimal 1 URL foto. Bisa lebih dari 10 URL.
               </p>
@@ -479,7 +495,7 @@ export default function DasborAdmins() {
                 Form tambahan (contoh: WhatsApp, Link Toko, dll) – ketik nama
                 field lalu Enter, atau ketuk di luar input
               </label>
-              <div className="input flex items-center gap-2 min-h-[42px]">
+              <div className="input">
                 <input
                   className="bg-transparent outline-none border-none text-xs w-full"
                   value={extraFieldInput}
@@ -498,7 +514,9 @@ export default function DasborAdmins() {
                       className="border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 flex flex-col gap-1 text-[11px] bg-white dark:bg-bg-dark flex-shrink-0 min-w-[220px]"
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <span className="font-semibold">{field.label}</span>
+                        <span className="font-semibold max-w-[150px] truncate">
+                          {field.label}
+                        </span>
                         <button
                           type="button"
                           onClick={() => removeExtraField(field.id)}
@@ -577,29 +595,15 @@ export default function DasborAdmins() {
               </label>
             </div>
 
-            {/* KATEGORI (chip horizontal scroll) */}
+            {/* KATEGORI */}
             <div className="grid gap-1">
               <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
                 Katalog / kategori – tekan Enter untuk menambah beberapa kategori
               </label>
-              <div className="input flex items-center gap-2 overflow-x-auto whitespace-nowrap min-h-[42px]">
-                {categories.map((cat) => (
-                  <span
-                    key={cat}
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-200 dark:bg-slate-700 text-[10px] text-slate-800 dark:text-[var(--text)] flex-shrink-0"
-                  >
-                    {cat}
-                    <button
-                      type="button"
-                      onClick={() => removeCategory(cat)}
-                      className="text-[10px]"
-                    >
-                      ✕
-                    </button>
-                  </span>
-                ))}
+              <div className="input">
                 <input
-                  className="bg-transparent outline-none border-none text-xs flex-shrink-0 w-40"
+                  ref={categoryInputRef}
+                  className="bg-transparent outline-none border-none text-xs w-full"
                   value={categoryInput}
                   onChange={(e) => setCategoryInput(e.target.value)}
                   onKeyDown={handleCategoryKeyDown}
@@ -610,6 +614,25 @@ export default function DasborAdmins() {
                   }
                 />
               </div>
+              {categories.length > 0 && (
+                <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+                  {categories.map((cat) => (
+                    <span
+                      key={cat}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-200 dark:bg-slate-700 text-[10px] text-slate-800 dark:text-[var(--text)] flex-shrink-0 max-w-[150px]"
+                    >
+                      <span className="truncate">{cat}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeCategory(cat)}
+                        className="text-[10px]"
+                      >
+                        ✕
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* FOOTER FORM */}
