@@ -411,13 +411,14 @@ export default function DasborAdmins() {
                     Rp
                   </span>
                   <input
-                    className="input pl-12"
+                    className="input pl-14"  // Diperbesar sedikit agar angka tidak terlalu dekat dengan "Rp"
                     value={priceInput}
                     onChange={handlePriceChange}
                     placeholder="1.000"
                   />
                 </div>
               </div>
+            </div>
 
             {/* Diskon */}
             <div className="grid gap-1 items-end">
