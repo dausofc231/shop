@@ -2,9 +2,16 @@
 import { useEffect, useState } from "react";
 import { auth, db } from "../lib/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { doc, getDoc, addDoc, collection, serverTimestamp } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  addDoc,
+  collection,
+  serverTimestamp,
+} from "firebase/firestore";
 import { useRouter } from "next/router";
 import Link from "next/link";
+import { FiSun, FiMoon } from "react-icons/fi";
 
 export default function DasborAdmins() {
   const router = useRouter();
@@ -12,13 +19,28 @@ export default function DasborAdmins() {
   const [checking, setChecking] = useState(true);
   const [theme, setTheme] = useState("dark");
 
+  // form state
   const [name, setName] = useState("");
-  const [price, setPrice] = useState("");
-  const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
+  const [price, setPrice] = useState("");
+  const [discount, setDiscount] = useState("");
+  const [stock, setStock] = useState("");
+  const [extraForm, setExtraForm] = useState("");
+  const [requireLogin, setRequireLogin] = useState(false);
+
+  const [categories, setCategories] = useState<string[]>([]);
+  const [categoryInput, setCategoryInput] = useState("");
+
+  const [mainImages, setMainImages] = useState<string[]>([]);
+  const [mainImageInput, setMainImageInput] = useState("");
+
+  const [extraImages, setExtraImages] = useState<string[]>([]);
+  const [extraImageInput, setExtraImageInput] = useState("");
+
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
+  // THEME INIT
   useEffect(() => {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("theme") || "dark";
@@ -26,6 +48,7 @@ export default function DasborAdmins() {
     }
   }, []);
 
+  // THEME APPLY
   useEffect(() => {
     const root = document.documentElement;
     if (theme === "dark") {
@@ -37,6 +60,11 @@ export default function DasborAdmins() {
     }
   }, [theme]);
 
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  };
+
+  // AUTH CHECK
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       if (!user) {
@@ -71,13 +99,73 @@ export default function DasborAdmins() {
     router.push("/");
   };
 
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  // helper: tambah tag kategori
+  const handleCategoryKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const val = categoryInput.trim();
+      if (!val) return;
+      if (!categories.includes(val)) {
+        setCategories((prev) => [...prev, val]);
+      }
+      setCategoryInput("");
+    }
   };
 
-  const handleAddProduct = async (e) => {
+  const removeCategory = (cat: string) => {
+    setCategories((prev) => prev.filter((c) => c !== cat));
+  };
+
+  // helper: tambah main image
+  const handleMainImageKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const val = mainImageInput.trim();
+      if (!val) return;
+      setMainImages((prev) => [...prev, val]);
+      setMainImageInput("");
+    }
+  };
+
+  const removeMainImage = (url: string) => {
+    setMainImages((prev) => prev.filter((u) => u !== url));
+  };
+
+  // helper: tambah extra image
+  const handleExtraImageKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const val = extraImageInput.trim();
+      if (!val) return;
+      setExtraImages((prev) => [...prev, val]);
+      setExtraImageInput("");
+    }
+  };
+
+  const removeExtraImage = (url: string) => {
+    setExtraImages((prev) => prev.filter((u) => u !== url));
+  };
+
+  const resetForm = () => {
+    setName("");
+    setDescription("");
+    setPrice("");
+    setDiscount("");
+    setStock("");
+    setExtraForm("");
+    setRequireLogin(false);
+    setCategories([]);
+    setCategoryInput("");
+    setMainImages([]);
+    setMainImageInput("");
+    setExtraImages([]);
+    setExtraImageInput("");
+  };
+
+  const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage("");
+
     if (!name || !price) {
       setMessage("Nama dan harga wajib diisi.");
       return;
@@ -87,17 +175,20 @@ export default function DasborAdmins() {
       setSaving(true);
       await addDoc(collection(db, "products"), {
         name,
-        price: Number(price),
-        category: category || null,
         description: description || null,
+        price: Number(price),
+        discount: discount ? Number(discount) : 0,
+        stock: stock ? Number(stock) : 0,
+        extraForm: extraForm || null,
+        requireLogin,
+        categories,
+        mainImages,
+        extraImages,
         createdAt: serverTimestamp(),
         createdBy: adminData?.uid || null,
       });
       setMessage("Produk berhasil ditambahkan.");
-      setName("");
-      setPrice("");
-      setCategory("");
-      setDescription("");
+      resetForm();
     } catch (err) {
       console.error(err);
       setMessage("Gagal menambahkan produk.");
@@ -124,55 +215,57 @@ export default function DasborAdmins() {
           <div className="font-semibold text-lg tracking-tight text-slate-900 dark:text-[var(--text)]">
             Shop<span className="text-primary">Lite</span> Admin
           </div>
-          <div className="flex items-center gap-4 text-xs">
-            <button
-              type="button"
-              onClick={toggleTheme}
-              className="px-3 py-1 border rounded-lg text-xs border-slate-300 dark:border-slate-600 text-slate-800 dark:text-[var(--text)] bg-white dark:bg-card-dark"
-            >
-              {theme === "dark" ? "Mode terang" : "Mode gelap"}
-            </button>
-            <button
-              type="button"
-              className="px-3 py-1 border rounded-lg text-xs border-slate-300 dark:border-slate-600 text-slate-800 dark:text-[var(--text)] bg-white dark:bg-card-dark"
-            >
-              Menu
-            </button>
-          </div>
+
+          {/* hanya darkmode icon, tanpa tombol "Menu" */}
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="h-9 w-9 flex items-center justify-center rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-card-dark"
+            aria-label="Dark / light mode"
+          >
+            {theme === "dark" ? (
+              <FiSun className="text-primary" />
+            ) : (
+              <FiMoon className="text-slate-700" />
+            )}
+          </button>
         </div>
       </header>
 
       <main className="max-w-5xl mx-auto px-4 py-8">
-        <div className="card mb-6">
-          <h1 className="text-lg font-semibold mb-2 text-slate-900 dark:text-[var(--text)]">
-            Dasbor Admin
-          </h1>
-          <p className="text-xs text-slate-600 dark:text-[var(--text-secondary)] mb-4">
-            Role: <span className="font-semibold">{adminData.role}</span> |{" "}
-            {adminData.email}
-          </p>
-
-          <div className="mb-4 flex gap-2 text-xs">
-            <Link href="/" className="btn-primary text-center w-full">
-              Ke Home / Katalog
-            </Link>
-            <button
-              onClick={handleLogout}
-              className="w-full px-4 py-2 text-xs rounded-lg border border-red-500 text-red-500 bg-transparent"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-
+        {/* FORM TAMBAH PRODUK */}
         <div className="card">
-          <h2 className="text-sm font-semibold mb-4 text-slate-900 dark:text-[var(--text)]">
-            Tambah Produk
-          </h2>
+          <div className="flex items-start justify-between gap-2 mb-4">
+            <div>
+              <h1 className="text-lg font-semibold mb-1 text-slate-900 dark:text-[var(--text)]">
+                Tambah Produk
+              </h1>
+              <p className="text-xs text-slate-600 dark:text-[var(--text-secondary)]">
+                Role: <span className="font-semibold">{adminData.role}</span> |{" "}
+                {adminData.email}
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 text-xs">
+              <Link
+                href="/"
+                className="px-3 py-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-bg-dark text-slate-800 dark:text-[var(--text)] text-center"
+              >
+                Home / Katalog
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="px-3 py-1 rounded-lg border border-red-500 text-red-500 text-center"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+
           <form onSubmit={handleAddProduct} className="grid gap-4">
+            {/* Nama */}
             <div className="grid gap-1">
               <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                Nama Produk
+                Nama produk
               </label>
               <input
                 className="input"
@@ -181,32 +274,11 @@ export default function DasborAdmins() {
                 placeholder="Nama produk"
               />
             </div>
+
+            {/* Deskripsi */}
             <div className="grid gap-1">
               <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                Harga
-              </label>
-              <input
-                className="input"
-                type="number"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                placeholder="Misal: 150000"
-              />
-            </div>
-            <div className="grid gap-1">
-              <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                Kategori (opsional)
-              </label>
-              <input
-                className="input"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                placeholder="Misal: Fashion, Elektronik"
-              />
-            </div>
-            <div className="grid gap-1">
-              <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                Deskripsi (opsional)
+                Deskripsi
               </label>
               <textarea
                 className="input min-h-[80px]"
@@ -216,6 +288,186 @@ export default function DasborAdmins() {
               />
             </div>
 
+            {/* Harga + Diskon + Stok */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid gap-1">
+                <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                  Harga
+                </label>
+                <input
+                  className="input"
+                  type="number"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  placeholder="contoh: 150000"
+                />
+              </div>
+              <div className="grid gap-1">
+                <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                  Diskon (%)
+                </label>
+                <input
+                  className="input"
+                  type="number"
+                  value={discount}
+                  onChange={(e) => setDiscount(e.target.value)}
+                  placeholder="misal: 10"
+                />
+              </div>
+              <div className="grid gap-1">
+                <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                  Stok
+                </label>
+                <input
+                  className="input"
+                  type="number"
+                  value={stock}
+                  onChange={(e) => setStock(e.target.value)}
+                  placeholder="misal: 25"
+                />
+              </div>
+            </div>
+
+            {/* Foto produk (multi) */}
+            <div className="grid gap-1">
+              <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                Foto produk (URL) – tekan Enter untuk menambah beberapa foto
+              </label>
+              <input
+                className="input text-xs"
+                value={mainImageInput}
+                onChange={(e) => setMainImageInput(e.target.value)}
+                onKeyDown={handleMainImageKeyDown}
+                placeholder="https://example.com/foto-utama.jpg"
+              />
+              {mainImages.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {mainImages.map((url) => (
+                    <span
+                      key={url}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-200 dark:bg-slate-700 text-[10px] text-slate-800 dark:text-[var(--text)]"
+                    >
+                      {url.length > 26 ? url.slice(0, 23) + "..." : url}
+                      <button
+                        type="button"
+                        onClick={() => removeMainImage(url)}
+                        className="text-[10px]"
+                      >
+                        ✕
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Foto tambahan (multi) */}
+            <div className="grid gap-1">
+              <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                Foto tambahan (URL) – opsional
+              </label>
+              <input
+                className="input text-xs"
+                value={extraImageInput}
+                onChange={(e) => setExtraImageInput(e.target.value)}
+                onKeyDown={handleExtraImageKeyDown}
+                placeholder="https://example.com/foto-lain.jpg"
+              />
+              {extraImages.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {extraImages.map((url) => (
+                    <span
+                      key={url}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-200 dark:bg-slate-700 text-[10px] text-slate-800 dark:text-[var(--text)]"
+                    >
+                      {url.length > 26 ? url.slice(0, 23) + "..." : url}
+                      <button
+                        type="button"
+                        onClick={() => removeExtraImage(url)}
+                        className="text-[10px]"
+                      >
+                        ✕
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Form tambahan */}
+            <div className="grid gap-1">
+              <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                Form tambahan (opsional)
+              </label>
+              <textarea
+                className="input min-h-[60px]"
+                value={extraForm}
+                onChange={(e) => setExtraForm(e.target.value)}
+                placeholder="Misal: catatan khusus, syarat & ketentuan, dll."
+              />
+            </div>
+
+            {/* Wajib login atau tidak */}
+            <div className="grid gap-1">
+              <span className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                Wajib login untuk melihat / membeli produk ini?
+              </span>
+              <div className="flex items-center gap-4 text-xs mt-1">
+                <label className="flex items-center gap-1">
+                  <input
+                    type="radio"
+                    className="accent-primary"
+                    checked={requireLogin === true}
+                    onChange={() => setRequireLogin(true)}
+                  />
+                  <span>Ya, wajib login</span>
+                </label>
+                <label className="flex items-center gap-1">
+                  <input
+                    type="radio"
+                    className="accent-primary"
+                    checked={requireLogin === false}
+                    onChange={() => setRequireLogin(false)}
+                  />
+                  <span>Tidak perlu login</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Katalog / kategori (multi tag) */}
+            <div className="grid gap-1">
+              <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                Katalog / kategori – tekan Enter untuk menambah beberapa kategori
+              </label>
+              <input
+                className="input text-xs"
+                value={categoryInput}
+                onChange={(e) => setCategoryInput(e.target.value)}
+                onKeyDown={handleCategoryKeyDown}
+                placeholder="Contoh: elektronik, fashion, teknologi"
+              />
+              {categories.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {categories.map((cat) => (
+                    <span
+                      key={cat}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-200 dark:bg-slate-700 text-[10px] text-slate-800 dark:text-[var(--text)]"
+                    >
+                      {cat}
+                      <button
+                        type="button"
+                        onClick={() => removeCategory(cat)}
+                        className="text-[10px]"
+                      >
+                        ✕
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* FOOTER FORM */}
             <div className="flex items-center justify-between mt-2">
               <button
                 type="submit"
