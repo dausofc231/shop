@@ -135,13 +135,17 @@ export default function DasborAdmins() {
   };
 
   // === FOTO PRODUK (CHIP DALAM 1 FIELD) ===
+  const addImage = () => {
+    const val = imageInput.trim();
+    if (!val) return;
+    setImages((prev) => [...prev, val]);
+    setImageInput("");
+  };
+
   const handleImageKeyDown = (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      const val = imageInput.trim();
-      if (!val) return;
-      setImages((prev) => [...prev, val]);
-      setImageInput("");
+      addImage();
     }
   };
 
@@ -167,23 +171,27 @@ export default function DasborAdmins() {
   };
 
   // === FORM TAMBAHAN FIELD (WhatsApp, dll) ===
+  const addExtraField = () => {
+    const label = extraFieldInput.trim();
+    if (!label) return;
+    const id = Date.now().toString() + Math.random().toString(16).slice(2);
+    setExtraFields((prev) => [
+      ...prev,
+      {
+        id,
+        label,
+        type: "text",
+        required: false,
+        requireHttps: false,
+      },
+    ]);
+    setExtraFieldInput("");
+  };
+
   const handleExtraFieldKeyDown = (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      const label = extraFieldInput.trim();
-      if (!label) return;
-      const id = Date.now().toString() + Math.random().toString(16).slice(2);
-      setExtraFields((prev) => [
-        ...prev,
-        {
-          id,
-          label,
-          type: "text",
-          required: false,
-          requireHttps: false,
-        },
-      ]);
-      setExtraFieldInput("");
+      addExtraField();
     }
   };
 
@@ -360,7 +368,7 @@ export default function DasborAdmins() {
               />
             </div>
 
-            {/* Harga + Diskon satu baris (kanan kiri) */}
+            {/* Harga + Diskon satu baris kanan kiri */}
             <div className="grid grid-cols-2 gap-4">
               {/* Harga */}
               <div className="grid gap-1">
@@ -372,7 +380,7 @@ export default function DasborAdmins() {
                     Rp
                   </span>
                   <input
-                    className="input pl-10"
+                    className="input pl-12"
                     value={priceInput}
                     onChange={handlePriceChange}
                     placeholder="150.000"
@@ -399,7 +407,7 @@ export default function DasborAdmins() {
               </div>
             </div>
 
-            {/* Stok (sendiri) */}
+            {/* Stok */}
             <div className="grid gap-1">
               <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
                 Stok
@@ -412,10 +420,11 @@ export default function DasborAdmins() {
               />
             </div>
 
-            {/* Foto produk (1 kolom, chip) */}
+            {/* Foto produk (1 kolom, chip + tombol +) */}
             <div className="grid gap-1">
               <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                Foto produk (URL) – tekan Enter untuk menambah beberapa foto
+                Foto produk (URL) – tekan Enter atau tombol + untuk menambah
+                beberapa foto
               </label>
               <div className="input flex flex-wrap items-center gap-1 min-h-[42px]">
                 {images.map((url) => (
@@ -444,6 +453,13 @@ export default function DasborAdmins() {
                       : ""
                   }
                 />
+                <button
+                  type="button"
+                  onClick={addImage}
+                  className="px-2 py-1 text-[11px] rounded bg-primary text-white"
+                >
+                  +
+                </button>
               </div>
               <p className="text-[10px] text-slate-500 dark:text-[var(--text-secondary)]">
                 Minimal 1 URL foto. Bisa lebih dari 10 URL.
@@ -454,7 +470,7 @@ export default function DasborAdmins() {
             <div className="grid gap-1">
               <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
                 Form tambahan (contoh: WhatsApp, Link Toko, dll) – ketik nama
-                field lalu Enter
+                field lalu Enter atau tombol +
               </label>
               <div className="input flex flex-wrap items-center gap-1 min-h-[42px] mb-2">
                 <input
@@ -464,6 +480,13 @@ export default function DasborAdmins() {
                   onKeyDown={handleExtraFieldKeyDown}
                   placeholder="Contoh: WhatsApp, Instagram, Website"
                 />
+                <button
+                  type="button"
+                  onClick={addExtraField}
+                  className="px-2 py-1 text-[11px] rounded bg-primary text-white"
+                >
+                  +
+                </button>
               </div>
 
               {extraFields.length > 0 && (
