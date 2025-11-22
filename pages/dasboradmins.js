@@ -368,12 +368,12 @@ export default function DasborAdmins() {
                 <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
                   Harga (Nominal)
                 </label>
-                <div className="relative">
-                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-[var(--text-secondary)]">
+                <div className="input flex items-center gap-2">
+                  <span className="pl-2 text-xs text-slate-500 dark:text-[var(--text-secondary)]">
                     Rp
                   </span>
                   <input
-                    className="input pl-28"
+                    className="flex-1 bg-transparent border-none outline-none text-sm"
                     value={priceInput}
                     onChange={handlePriceChange}
                     placeholder="1.000"
@@ -404,12 +404,12 @@ export default function DasborAdmins() {
                 <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
                   Harga Setelah Diskon (Hasil)
                 </label>
-                <div className="relative">
-                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-[var(--text-secondary)]">
+                <div className="input flex items-center gap-2 bg-slate-200 dark:bg-slate-800">
+                  <span className="pl-2 text-xs text-slate-500 dark:text-[var(--text-secondary)]">
                     Rp
                   </span>
                   <input
-                    className="input pl-28 bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed"
+                    className="flex-1 bg-transparent border-none outline-none text-sm text-slate-500 dark:text-slate-400 cursor-not-allowed"
                     value={finalPricePreview}
                     disabled
                     readOnly
