@@ -270,7 +270,7 @@ export default function DasborAdmins() {
 
   if (!adminData) return null;
 
-  // === HITUNG HASIL HARGA SETELAH DISKON UNTUK PREVIEW ===
+  // === HITUNG HASIL HARGA SETELAH DISKON (UNTUK DITAMPILKAN SAJA) ===
   const basePriceDigits = priceInput.replace(/\D/g, "");
   const discountNumberPreview = discountInput ? Number(discountInput) : 0;
   let finalPricePreview = "";
@@ -335,10 +335,10 @@ export default function DasborAdmins() {
 
           {/* FORM */}
           <form onSubmit={handleAddProduct} className="grid gap-4">
-            {/* Nama Produk */}
+            {/* Nama produk */}
             <div className="grid gap-1">
               <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                Nama Produk
+                Nama produk
               </label>
               <input
                 className="input"
@@ -348,10 +348,10 @@ export default function DasborAdmins() {
               />
             </div>
 
-            {/* Deskripsi Produk */}
+            {/* Deskripsi */}
             <div className="grid gap-1">
               <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                Deskripsi Produk
+                Deskripsi
               </label>
               <textarea
                 className="input min-h-[80px]"
@@ -361,68 +361,71 @@ export default function DasborAdmins() {
               />
             </div>
 
-            {/* HARGA + DISKON + HASIL (3 kolom 1 baris) */}
-            <div className="grid grid-cols-3 gap-4">
-              {/* Harga (Nominal) */}
-              <div className="grid gap-1">
-                <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                  Harga (Nominal)
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-[var(--text-secondary)]">
-                    {"Rp\u00A0\u00A0\u00A0"}
-                  </span>
-                  <input
-                    className="input pl-16"
-                    value={priceInput}
-                    onChange={handlePriceChange}
-                    placeholder="1.000"
-                  />
+            {/* Harga + Diskon + Hasil */}
+            <div className="grid gap-2">
+              <div className="grid gap-4 sm:grid-cols-3">
+                {/* Harga */}
+                <div className="grid gap-1">
+                  <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                    Harga
+                  </label>
+                  <div className="flex">
+                    {/* Rp di lapisan sendiri */}
+                    <div className="flex items-center px-3 text-xs border border-slate-300 dark:border-slate-600 rounded-l-xl rounded-r-none bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-[var(--text-secondary)]">
+                      Rp
+                    </div>
+                    <input
+                      className="input rounded-l-none flex-1"
+                      value={priceInput}
+                      onChange={handlePriceChange}
+                      placeholder="1.000"
+                    />
+                  </div>
                 </div>
-              </div>
 
-              {/* Diskon (%) */}
-              <div className="grid gap-1">
-                <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                  Diskon (%)
-                </label>
-                <div className="relative">
-                  <input
-                    className="input pr-8 w-[80px]"
-                    value={discountInput}
-                    onChange={handleDiscountChange}
-                    placeholder="0"
-                  />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-[var(--text-secondary)]">
-                    %
-                  </span>
+                {/* Diskon */}
+                <div className="grid gap-1">
+                  <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                    Diskon (%)
+                  </label>
+                  <div className="relative">
+                    <input
+                      className="input pr-10"
+                      value={discountInput}
+                      onChange={handleDiscountChange}
+                      placeholder="0"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-[var(--text-secondary)]">
+                      %
+                    </span>
+                  </div>
                 </div>
-              </div>
 
-              {/* Harga Setelah Diskon (Hasil) */}
-              <div className="grid gap-1">
-                <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                  Harga Setelah Diskon (Hasil)
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-[var(--text-secondary)]">
-                    {"Rp\u00A0\u00A0\u00A0"}
-                  </span>
-                  <input
-                    className="input pl-16 bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed"
-                    value={finalPricePreview}
-                    disabled
-                    readOnly
-                    placeholder="0"
-                  />
+                {/* Harga setelah diskon */}
+                <div className="grid gap-1">
+                  <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                    Harga setelah diskon
+                  </label>
+                  <div className="flex">
+                    <div className="flex items-center px-3 text-xs border border-slate-300 dark:border-slate-600 rounded-l-xl rounded-r-none bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-[var(--text-secondary)]">
+                      Rp
+                    </div>
+                    <input
+                      className="input rounded-l-none flex-1 bg-slate-200 dark:bg-slate-800 cursor-not-allowed"
+                      value={finalPricePreview}
+                      disabled
+                      readOnly
+                      placeholder="0"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Stok Produk */}
+            {/* Stok */}
             <div className="grid gap-1">
               <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                Stok Produk
+                Stok
               </label>
               <input
                 className="input"
@@ -432,11 +435,10 @@ export default function DasborAdmins() {
               />
             </div>
 
-            {/* Foto Produk */}
+            {/* Foto produk */}
             <div className="grid gap-1">
               <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                Foto Produk (URL) – tekan Enter, atau ketuk di luar input untuk
-                menambah (wajib http:// atau https://)
+                Foto produk (URL)
               </label>
               <div className="input">
                 <input
@@ -476,14 +478,14 @@ export default function DasborAdmins() {
                 </div>
               )}
               <p className="text-[10px] text-slate-500 dark:text-[var(--text-secondary)]">
-                Minimal 1 URL foto. Bisa lebih dari 10 URL.
+                Minimal 1 URL foto. Format http:// atau https://
               </p>
             </div>
 
-            {/* Kategori Produk */}
+            {/* Kategori */}
             <div className="grid gap-1">
               <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                Katalog / Kategori – tekan Enter untuk menambah beberapa kategori
+                Kategori
               </label>
               <div className="input">
                 <input
@@ -518,12 +520,15 @@ export default function DasborAdmins() {
                   ))}
                 </div>
               )}
+              <p className="text-[10px] text-slate-500 dark:text-[var(--text-secondary)]">
+                Tekan Enter untuk menambah kategori.
+              </p>
             </div>
 
-            {/* Akses Produk */}
+            {/* Akses produk */}
             <div className="grid gap-1">
               <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                Akses Produk
+                Akses produk
               </label>
               <label className="flex items-center gap-2 text-xs">
                 <input
@@ -532,9 +537,7 @@ export default function DasborAdmins() {
                   checked={requireLogin}
                   onChange={(e) => setRequireLogin(e.target.checked)}
                 />
-                <span>
-                  Wajib login untuk melihat / membeli produk ini (default aktif)
-                </span>
+                <span>Wajib login untuk melihat / membeli produk ini</span>
               </label>
             </div>
 
