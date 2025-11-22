@@ -12,33 +12,44 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { onAuthStateChanged, signOut } from "firebase/auth";
-import { FiSun, FiMoon, FiMenu, FiUser, FiSearch } from "react-icons/fi";
+import {
+  FiSun,
+  FiMoon,
+  FiMenu,
+  FiUser,
+  FiSearch,
+  FiChevronLeft,
+  FiChevronRight,
+} from "react-icons/fi";
 
-// DATA SLIDER (bisa kamu ganti teks/url-nya)
+// DATA SLIDER – bebas kamu ganti imageUrl + teks + url
 const sliderData = [
   {
     id: 0,
-    title: "Temukan produk favoritmu",
-    description: "Jelajahi katalog ShopLite tanpa perlu login.",
-    buttonLabel: "Lihat katalog",
+    title: "Special Discount",
+    description: "Get up to 50% off on selected items.",
+    buttonLabel: "Shop",
     buttonUrl: "#katalog",
-    bgClass: "bg-gradient-to-r from-blue-500 via-indigo-500 to-sky-500",
+    imageUrl:
+      "https://images.pexels.com/photos/842567/pexels-photo-842567.jpeg?auto=compress&cs=tinysrgb&w=1200",
   },
   {
     id: 1,
-    title: "Promo spesial pengguna baru",
-    description: "Diskon terbatas untuk beberapa produk pilihan.",
-    buttonLabel: "Lihat promo",
+    title: "New Arrivals",
+    description: "Produk terbaru hadir setiap minggunya.",
+    buttonLabel: "See new items",
     buttonUrl: "#katalog",
-    bgClass: "bg-gradient-to-r from-fuchsia-500 via-purple-500 to-indigo-500",
+    imageUrl:
+      "https://images.pexels.com/photos/2529148/pexels-photo-2529148.jpeg?auto=compress&cs=tinysrgb&w=1200",
   },
   {
     id: 2,
-    title: "Butuh barang cepat?",
-    description: "Cari produk populer yang paling sering dibeli.",
-    buttonLabel: "Lihat produk populer",
+    title: "Best Sellers",
+    description: "Lihat produk paling populer di ShopLite.",
+    buttonLabel: "View best sellers",
     buttonUrl: "#katalog",
-    bgClass: "bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500",
+    imageUrl:
+      "https://images.pexels.com/photos/7679879/pexels-photo-7679879.jpeg?auto=compress&cs=tinysrgb&w=1200",
   },
 ];
 
@@ -58,6 +69,7 @@ export default function Home() {
 
   // slider
   const [activeSlide, setActiveSlide] = useState(0);
+  const [touchStartX, setTouchStartX] = useState(null);
 
   // search + filter
   const [searchTerm, setSearchTerm] = useState("");
@@ -66,11 +78,11 @@ export default function Home() {
   const [filterOpen, setFilterOpen] = useState(false);
 
   const filterLabel = {
-    semua: "Semua produk",
-    diskon: "Produk diskon",
-    populer: "Produk populer",
-    termurah: "Harga termurah",
-    termahal: "Harga termahal",
+    semua: "Terbaru",
+    diskon: "Diskon",
+    populer: "Populer",
+    termurah: "Termurah",
+    termahal: "Termahal",
   }[selectedFilter];
 
   /* THEME */
@@ -98,6 +110,25 @@ export default function Home() {
     }, 5000); // 5 detik
     return () => clearInterval(id);
   }, []);
+
+  const goNextSlide = () =>
+    setActiveSlide((prev) => (prev + 1) % sliderData.length);
+  const goPrevSlide = () =>
+    setActiveSlide((prev) => (prev - 1 + sliderData.length) % sliderData.length);
+
+  const handleTouchStart = (e) => {
+    setTouchStartX(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = (e) => {
+    if (touchStartX === null) return;
+    const diff = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(diff) > 40) {
+      if (diff < 0) goNextSlide();
+      else goPrevSlide();
+    }
+    setTouchStartX(null);
+  };
 
   /* LOAD PRODUCTS */
   useEffect(() => {
@@ -165,6 +196,7 @@ export default function Home() {
       setMenuOpen(false);
       setProfileOpen(false);
     } catch (err) {
+      console.error(err);
     }
   };
 
@@ -187,7 +219,6 @@ export default function Home() {
     return name.includes(term) || desc.includes(term);
   });
 
-  // filter berdasarkan jenis
   if (selectedFilter === "diskon") {
     filteredProducts = filteredProducts.filter(
       (p) => p.discount === true || p.isDiscount === true
@@ -196,7 +227,6 @@ export default function Home() {
     filteredProducts = filteredProducts.filter((p) => p.popular === true);
   }
 
-  // sort berdasarkan harga
   if (selectedFilter === "termurah") {
     filteredProducts = [...filteredProducts].sort(
       (a, b) => (a.price || 0) - (b.price || 0)
@@ -329,6 +359,12 @@ export default function Home() {
                   >
                     Login
                   </Link>
+                  <Link
+                    href="/auth/register"
+                    className="hover:underline text-slate-800 dark:text-[var(--text)]"
+                  >
+                    Register
+                  </Link>
                 </>
               )}
             </nav>
@@ -349,7 +385,7 @@ export default function Home() {
                   className="relative z-10 w-full max-w-xs rounded-xl p-4 bg-white dark:bg-card-dark border border-slate-200 dark:border-slate-700"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  {/* HEADER atas */}
+                  {/* HEADER */}
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <p className="text-xs text-slate-600 dark:text-[var(--text-secondary)]">
@@ -368,7 +404,7 @@ export default function Home() {
                     </p>
                   </div>
 
-                  {/* FOTO PROFIL TENGAH */}
+                  {/* FOTO PROFIL */}
                   <div className="w-full flex justify-center mb-4">
                     <button
                       onClick={() => setShowAvatarInput((v) => !v)}
@@ -432,102 +468,128 @@ export default function Home() {
       {/* MAIN CONTENT */}
       <main className="max-w-5xl mx-auto px-4 py-8">
         {/* HERO SLIDER */}
-        <section className="mb-8">
-          <div className="relative rounded-2xl overflow-hidden h-44 sm:h-52 bg-slate-900 text-white">
-            {/* background gradient */}
+        <section className="mb-6">
+          <div
+            className="relative overflow-hidden rounded-2xl h-44 sm:h-52 bg-slate-900"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
+            {/* inner flex yang digeser */}
             <div
-              className={`absolute inset-0 ${sliderData[activeSlide].bgClass}`}
-            />
-            {/* overlay gelap dikit biar teks kebaca */}
-            <div className="absolute inset-0 bg-black/20" />
-
-            {/* konten */}
-            <div className="relative z-10 h-full flex flex-col justify-between p-4 sm:p-6">
-              <div className="max-w-[70%]">
-                <h1 className="text-lg sm:text-xl font-semibold mb-1">
-                  {sliderData[activeSlide].title}
-                </h1>
-                <p className="text-xs sm:text-sm text-slate-100/90">
-                  {sliderData[activeSlide].description}
-                </p>
-              </div>
-
-              <div>
-                <Link
-                  href={sliderData[activeSlide].buttonUrl}
-                  className="inline-flex items-center px-4 py-2 rounded-lg bg-white/90 text-xs sm:text-sm text-slate-900 font-medium hover:bg-white"
+              className="absolute inset-0 flex transition-transform duration-500 ease-out"
+              style={{ transform: `translateX(-${activeSlide * 100}%)` }}
+            >
+              {sliderData.map((slide) => (
+                <div
+                  key={slide.id}
+                  className="relative w-full h-full flex-shrink-0"
                 >
-                  {sliderData[activeSlide].buttonLabel}
-                </Link>
-              </div>
+                  <img
+                    src={slide.imageUrl}
+                    alt={slide.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/35" />
+                  {/* konten di pojok kiri */}
+                  <div className="absolute inset-0 flex flex-col justify-center px-4 sm:px-6">
+                    <h1 className="text-base sm:text-lg font-semibold text-white mb-1">
+                      {slide.title}
+                    </h1>
+                    <p className="text-[11px] sm:text-xs text-slate-100 mb-3 max-w-[70%]">
+                      {slide.description}
+                    </p>
+                    <Link
+                      href={slide.buttonUrl}
+                      className="inline-flex items-center px-4 py-2 rounded-lg bg-primary text-xs sm:text-sm font-medium text-white shadow-md w-max"
+                    >
+                      {slide.buttonLabel}
+                    </Link>
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
 
-          {/* dots indikator */}
-          <div className="flex justify-center gap-2 mt-3">
-            {sliderData.map((slide, idx) => (
-              <button
-                key={slide.id}
-                onClick={() => setActiveSlide(idx)}
-                className={`h-2 w-2 rounded-full transition-all ${
-                  idx === activeSlide
-                    ? "bg-primary scale-110"
-                    : "bg-slate-400 dark:bg-slate-600"
-                }`}
-                aria-label={`Slide ${idx + 1}`}
-              />
-            ))}
+            {/* tombol kiri/kanan */}
+            <button
+              onClick={goPrevSlide}
+              className="absolute left-2 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-black/40 flex items-center justify-center text-white text-xs"
+            >
+              <FiChevronLeft />
+            </button>
+            <button
+              onClick={goNextSlide}
+              className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-black/40 flex items-center justify-center text-white text-xs"
+            >
+              <FiChevronRight />
+            </button>
+
+            {/* dots indikator */}
+            <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-2">
+              {sliderData.map((slide, idx) => (
+                <button
+                  key={slide.id}
+                  onClick={() => setActiveSlide(idx)}
+                  className={`h-2 w-2 rounded-full transition-all ${
+                    idx === activeSlide
+                      ? "bg-primary scale-110"
+                      : "bg-slate-300/80"
+                  }`}
+                />
+              ))}
+            </div>
           </div>
         </section>
 
-        {/* SEARCH */}
+        {/* JUDUL OUR PRODUCTS */}
         <section className="mb-4">
+          <h2 className="text-center text-base sm:text-lg font-semibold text-slate-900 dark:text-[var(--text)]">
+            Our Products
+          </h2>
+        </section>
+
+        {/* SEARCH */}
+        <section className="mb-3">
           <div className="relative max-w-md mx-auto">
-            {/* icon search */}
-            <span
-              className={`absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-[var(--text-secondary)] text-sm ${
-                (searchFocused || searchTerm) && "hidden"
-              }`}
-            >
-              <FiSearch />
-            </span>
+            {/* icon + placeholder custom */}
+            {!searchFocused && !searchTerm && (
+              <div className="pointer-events-none absolute inset-y-0 left-3 flex items-center gap-2 text-slate-400 dark:text-[var(--text-secondary)] text-xs sm:text-sm">
+                <FiSearch />
+                <span>Cari produk yang ingin anda cari...</span>
+              </div>
+            )}
 
             <input
-              className="input pl-9 text-xs sm:text-sm bg-white/90 dark:bg-card-dark"
+              className="input text-xs sm:text-sm bg-white/95 dark:bg-card-dark pl-3"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onFocus={() => setSearchFocused(true)}
               onBlur={() => {
                 if (!searchTerm) setSearchFocused(false);
               }}
-              placeholder={
-                searchFocused
-                  ? ""
-                  : "Cari produk yang ingin anda cari..."
-              }
             />
           </div>
         </section>
 
-        {/* FILTER BUTTON */}
-        <section className="mb-6 flex justify-center">
-          <div className="relative">
+        {/* FILTER DROPDOWN */}
+        <section className="mb-6">
+          <div className="relative max-w-md mx-auto">
             <button
               type="button"
               onClick={() => setFilterOpen((v) => !v)}
-              className="px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-card-dark text-xs sm:text-sm text-slate-800 dark:text-[var(--text)]"
+              className="w-full flex items-center justify-between px-4 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-card-dark text-xs sm:text-sm text-slate-800 dark:text-[var(--text)]"
             >
-              Filter: {filterLabel}
+              <span>{filterLabel}</span>
+              <span>▼</span>
             </button>
 
             {filterOpen && (
-              <div className="absolute mt-2 w-52 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-card-dark shadow-lg text-xs sm:text-sm overflow-hidden z-10">
+              <div className="absolute mt-2 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-card-dark shadow-lg text-xs sm:text-sm overflow-hidden z-10">
                 {[
-                  ["semua", "Semua produk"],
-                  ["diskon", "Produk diskon"],
-                  ["populer", "Produk populer"],
-                  ["termurah", "Harga termurah"],
-                  ["termahal", "Harga termahal"],
+                  ["semua", "Terbaru"],
+                  ["diskon", "Diskon"],
+                  ["populer", "Populer"],
+                  ["termurah", "Termurah"],
+                  ["termahal", "Termahal"],
                 ].map(([value, label]) => (
                   <button
                     key={value}
@@ -558,15 +620,15 @@ export default function Home() {
             </p>
           ) : filteredProducts.length === 0 ? (
             <p className="text-xs text-slate-500 dark:text-[var(--text-secondary)]">
-              Tidak ada produk yang cocok dengan pencarian / filter.
+              Tidak ada produk tersedia.
             </p>
           ) : (
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
               {filteredProducts.map((p) => (
                 <div key={p.id} className="card flex flex-col">
-                  <h2 className="font-semibold text-sm text-slate-900 dark:text-[var(--text)]">
+                  <h3 className="font-semibold text-sm text-slate-900 dark:text-[var(--text)]">
                     {p.name}
-                  </h2>
+                  </h3>
                   {p.description && (
                     <p className="text-xs text-slate-600 dark:text-[var(--text-secondary)] mt-1 mb-3">
                       {p.description}
