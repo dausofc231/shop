@@ -47,11 +47,6 @@ export default function DasborAdmins() {
   const [categoryInput, setCategoryInput] = useState("");
   const categoryInputRef = useRef(null);
 
-  // FORM TAMBAHAN (WhatsApp, dll)
-  const [extraFieldInput, setExtraFieldInput] = useState("");
-  const [extraFields, setExtraFields] = useState([]);
-  // { id, label, type, required, requireHttps }
-
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -194,47 +189,6 @@ export default function DasborAdmins() {
     setCategories((prev) => prev.filter((c) => c !== cat));
   };
 
-  // === FORM TAMBAHAN FIELD (WhatsApp, dll) ===
-  const addExtraField = () => {
-    const label = extraFieldInput.trim();
-    if (!label) return;
-    const id = Date.now().toString() + Math.random().toString(16).slice(2);
-    setExtraFields((prev) => [
-      ...prev,
-      {
-        id,
-        label,
-        type: "text",
-        required: false,
-        requireHttps: false,
-      },
-    ]);
-    setExtraFieldInput("");
-  };
-
-  const handleExtraFieldKeyDown = (e) => {
-    if (e.key === "Enter" || e.keyCode === 13) {
-      e.preventDefault();
-      addExtraField();
-    }
-  };
-
-  const handleExtraFieldBlur = () => {
-    if (extraFieldInput.trim()) {
-      addExtraField();
-    }
-  };
-
-  const updateExtraField = (id, patch) => {
-    setExtraFields((prev) =>
-      prev.map((f) => (f.id === id ? { ...f, ...patch } : f))
-    );
-  };
-
-  const removeExtraField = (id) => {
-    setExtraFields((prev) => prev.filter((f) => f.id !== id));
-  };
-
   const resetForm = () => {
     setName("");
     setDescription("");
@@ -247,8 +201,6 @@ export default function DasborAdmins() {
     setUrlError("");
     setCategories([]);
     setCategoryInput("");
-    setExtraFieldInput("");
-    setExtraFields([]);
   };
 
   const handleAddProduct = async (e) => {
@@ -293,7 +245,6 @@ export default function DasborAdmins() {
         requireLogin,
         categories,
         images,
-        extraFields,
         labels: finalLabels,
         createdAt: serverTimestamp(),
         createdBy: adminData?.uid || null,
@@ -318,6 +269,17 @@ export default function DasborAdmins() {
   }
 
   if (!adminData) return null;
+
+  // === HITUNG HASIL HARGA SETELAH DISKON (UNTUK DITAMPILKAN SAJA) ===
+  const basePriceDigits = priceInput.replace(/\D/g, "");
+  const discountNumberPreview = discountInput ? Number(discountInput) : 0;
+  let finalPricePreview = "";
+  if (basePriceDigits) {
+    const base = Number(basePriceDigits);
+    const disc = isNaN(discountNumberPreview) ? 0 : discountNumberPreview;
+    const discounted = Math.round((base * (100 - disc)) / 100);
+    finalPricePreview = formatWithDots(String(discounted));
+  }
 
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-bg-dark text-slate-900 dark:text-[var(--text)] text-sm">
@@ -373,10 +335,10 @@ export default function DasborAdmins() {
 
           {/* FORM */}
           <form onSubmit={handleAddProduct} className="grid gap-4">
-            {/* Nama */}
+            {/* Nama Produk */}
             <div className="grid gap-1">
               <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                Nama produk
+                Nama Produk
               </label>
               <input
                 className="input"
@@ -386,10 +348,10 @@ export default function DasborAdmins() {
               />
             </div>
 
-            {/* Deskripsi */}
+            {/* Deskripsi Produk */}
             <div className="grid gap-1">
               <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                Deskripsi
+                Deskripsi Produk
               </label>
               <textarea
                 className="input min-h-[80px]"
@@ -399,35 +361,36 @@ export default function DasborAdmins() {
               />
             </div>
 
-            {/* Harga + Diskon satu baris kanan kiri */}
-            <div className="grid grid-cols-2 gap-4">
-              {/* Harga */}
-              <div className="grid gap-1">
-                <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                  Harga (Rp)
-                </label>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-[var(--text-secondary)]">
-                    Rp
-                  </span>
-                  <input
-                    className="input pl-14"
-                    value={priceInput}
-                    onChange={handlePriceChange}
-                    placeholder="1.000"
-                  />
-                </div>
-              </div>
-
-              {/* Diskon */}
-              <div className="grid gap-1 items-end">
-                <div>
+            {/* Harga + Diskon + Hasil */}
+            <div className="grid gap-2">
+              {/* Nominal & Diskon */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* Harga */}
+                <div className="grid gap-1">
                   <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                    Diskon
+                    Harga (Nominal)
                   </label>
-                  <div className="relative mt-1">
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-[var(--text-secondary)]">
+                      Rp
+                    </span>
                     <input
-                      className="input pr-8 w-[100px] sm:w-[120px]"
+                      className="input pl-16"
+                      value={priceInput}
+                      onChange={handlePriceChange}
+                      placeholder="1.000"
+                    />
+                  </div>
+                </div>
+
+                {/* Diskon */}
+                <div className="grid gap-1">
+                  <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                    Diskon (%)
+                  </label>
+                  <div className="relative mt-1 sm:mt-0">
+                    <input
+                      className="input pr-8 w-[70px] sm:w-[80px]"
                       value={discountInput}
                       onChange={handleDiscountChange}
                       placeholder="0"
@@ -438,12 +401,31 @@ export default function DasborAdmins() {
                   </div>
                 </div>
               </div>
+
+              {/* Hasil Setelah Diskon (read-only) */}
+              <div className="grid gap-1">
+                <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                  Harga Setelah Diskon (Hasil)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-[var(--text-secondary)]">
+                    Rp
+                  </span>
+                  <input
+                    className="input pl-16 bg-slate-200 dark:bg-slate-800 cursor-not-allowed"
+                    value={finalPricePreview}
+                    disabled
+                    readOnly
+                    placeholder="0"
+                  />
+                </div>
+              </div>
             </div>
 
-            {/* Stok */}
+            {/* Stok Produk */}
             <div className="grid gap-1">
               <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                Stok
+                Stok Produk
               </label>
               <input
                 className="input"
@@ -453,10 +435,10 @@ export default function DasborAdmins() {
               />
             </div>
 
-            {/* Foto produk */}
+            {/* Foto Produk */}
             <div className="grid gap-1">
               <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                Foto produk (URL) – tekan Enter, atau ketuk di luar input untuk
+                Foto Produk (URL) – tekan Enter, atau ketuk di luar input untuk
                 menambah (wajib http:// atau https://)
               </label>
               {/* kolom input */}
@@ -503,10 +485,10 @@ export default function DasborAdmins() {
               </p>
             </div>
 
-            {/* KATEGORI – sekarang di bawah URL */}
+            {/* Kategori Produk */}
             <div className="grid gap-1">
               <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                Katalog / kategori – tekan Enter untuk menambah beberapa kategori
+                Katalog / Kategori – tekan Enter untuk menambah beberapa kategori
               </label>
               <div className="input">
                 <input
@@ -543,98 +525,10 @@ export default function DasborAdmins() {
               )}
             </div>
 
-            {/* Form tambahan (WhatsApp, dll) */}
+            {/* Akses Produk */}
             <div className="grid gap-1">
               <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                Form tambahan (contoh: WhatsApp, Link Toko, dll) – ketik nama
-                field lalu Enter, atau ketuk di luar input
-              </label>
-              <div className="input">
-                <input
-                  className="bg-transparent outline-none border-none text-xs w-full"
-                  value={extraFieldInput}
-                  onChange={(e) => setExtraFieldInput(e.target.value)}
-                  onKeyDown={handleExtraFieldKeyDown}
-                  onBlur={handleExtraFieldBlur}
-                  placeholder="Contoh: WhatsApp, Instagram, Website"
-                />
-              </div>
-
-              {extraFields.length > 0 && (
-                <div className="flex gap-3 overflow-x-auto pb-1 mt-2">
-                  {extraFields.map((field) => (
-                    <div
-                      key={field.id}
-                      className="border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 flex flex-col gap-1 text-[11px] bg-white dark:bg-bg-dark flex-shrink-0 min-w-[220px]"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="font-semibold max-w-[150px] truncate">
-                          {field.label}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => removeExtraField(field.id)}
-                        >
-                          ✕
-                        </button>
-                      </div>
-                      <div className="flex flex-col gap-1 mt-1">
-                        <div className="flex items-center gap-1">
-                          <span>Tipe input:</span>
-                          <select
-                            className="border border-slate-300 dark:border-slate-600 rounded px-1 py-[1px] bg-white dark:bg-card-dark flex-1"
-                            value={field.type}
-                            onChange={(e) =>
-                              updateExtraField(field.id, {
-                                type: e.target.value,
-                              })
-                            }
-                          >
-                            <option value="text">Teks biasa</option>
-                            <option value="tel">Telepon / WhatsApp</option>
-                            <option value="url">URL / Link</option>
-                            <option value="number">Angka</option>
-                          </select>
-                        </div>
-                        <label className="flex items-center gap-1">
-                          <input
-                            type="checkbox"
-                            className="accent-primary"
-                            checked={field.required}
-                            onChange={(e) =>
-                              updateExtraField(field.id, {
-                                required: e.target.checked,
-                              })
-                            }
-                          />
-                          <span>Wajib diisi</span>
-                        </label>
-                        {field.type === "url" && (
-                          <label className="flex items-center gap-1">
-                            <input
-                              type="checkbox"
-                              className="accent-primary"
-                              checked={field.requireHttps}
-                              onChange={(e) =>
-                                updateExtraField(field.id, {
-                                  requireHttps: e.target.checked,
-                                })
-                              }
-                            />
-                            <span>Harus pakai https://</span>
-                          </label>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Wajib login checkbox – paling bawah sebelum tombol */}
-            <div className="grid gap-1">
-              <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                Akses produk
+                Akses Produk
               </label>
               <label className="flex items-center gap-2 text-xs">
                 <input
