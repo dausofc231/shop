@@ -30,7 +30,7 @@ export default function DasborAdmins() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
 
-  const [priceInput, setPriceInput] = useState(""); // "150.000"
+  const [priceInput, setPriceInput] = useState(""); // "1.000"
   const [discountInput, setDiscountInput] = useState(""); // "10"
   const [stockInput, setStockInput] = useState(""); // "25"
 
@@ -39,6 +39,7 @@ export default function DasborAdmins() {
   // FOTO PRODUK
   const [images, setImages] = useState([]);
   const [imageInput, setImageInput] = useState("");
+  const [urlError, setUrlError] = useState("");
   const imageInputRef = useRef(null);
 
   // KATEGORI
@@ -140,9 +141,17 @@ export default function DasborAdmins() {
   const addImage = () => {
     const val = imageInput.trim();
     if (!val) return;
+
+    // wajib http / https
+    if (!/^https?:\/\//i.test(val)) {
+      setUrlError("URL harus diawali dengan http:// atau https://");
+      return;
+    }
+    setUrlError("");
+
     setImages((prev) => [...prev, val]);
     setImageInput("");
-    // balikin fokus ke input url
+    // balik fokus ke input url
     setTimeout(() => {
       if (imageInputRef.current) imageInputRef.current.focus();
     }, 0);
@@ -156,7 +165,6 @@ export default function DasborAdmins() {
   };
 
   const handleImageBlur = () => {
-    // kalau user tap di luar input dan masih ada teks → auto chip
     if (imageInput.trim()) {
       addImage();
     }
@@ -236,6 +244,7 @@ export default function DasborAdmins() {
     setRequireLogin(true);
     setImages([]);
     setImageInput("");
+    setUrlError("");
     setCategories([]);
     setCategoryInput("");
     setExtraFieldInput("");
@@ -405,26 +414,28 @@ export default function DasborAdmins() {
                     className="input pl-12"
                     value={priceInput}
                     onChange={handlePriceChange}
-                    placeholder="150.000"
+                    placeholder="1.000"
                   />
                 </div>
               </div>
 
               {/* Diskon */}
-              <div className="grid gap-1">
-                <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                  Diskon
-                </label>
-                <div className="relative">
-                  <input
-                    className="input pr-8"
-                    value={discountInput}
-                    onChange={handleDiscountChange}
-                    placeholder="0"
-                  />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-[var(--text-secondary)]">
-                    %
-                  </span>
+              <div className="grid gap-1 items-end">
+                <div>
+                  <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                    Diskon
+                  </label>
+                  <div className="relative mt-1">
+                    <input
+                      className="input pr-8 w-[100px] sm:w-[120px]"
+                      value={discountInput}
+                      onChange={handleDiscountChange}
+                      placeholder="0"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-[var(--text-secondary)]">
+                      %
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -446,7 +457,7 @@ export default function DasborAdmins() {
             <div className="grid gap-1">
               <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
                 Foto produk (URL) – tekan Enter, atau ketuk di luar input untuk
-                menambah
+                menambah (wajib http:// atau https://)
               </label>
               {/* kolom input */}
               <div className="input">
@@ -464,6 +475,9 @@ export default function DasborAdmins() {
                   }
                 />
               </div>
+              {urlError && (
+                <p className="text-[10px] text-red-400 mt-1">{urlError}</p>
+              )}
               {/* chip slider bawah kolom */}
               {images.length > 0 && (
                 <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
@@ -487,6 +501,46 @@ export default function DasborAdmins() {
               <p className="text-[10px] text-slate-500 dark:text-[var(--text-secondary)]">
                 Minimal 1 URL foto. Bisa lebih dari 10 URL.
               </p>
+            </div>
+
+            {/* KATEGORI – sekarang di bawah URL */}
+            <div className="grid gap-1">
+              <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                Katalog / kategori – tekan Enter untuk menambah beberapa kategori
+              </label>
+              <div className="input">
+                <input
+                  ref={categoryInputRef}
+                  className="bg-transparent outline-none border-none text-xs w-full"
+                  value={categoryInput}
+                  onChange={(e) => setCategoryInput(e.target.value)}
+                  onKeyDown={handleCategoryKeyDown}
+                  placeholder={
+                    categories.length === 0
+                      ? "Contoh: elektronik, fashion, teknologi"
+                      : ""
+                  }
+                />
+              </div>
+              {categories.length > 0 && (
+                <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
+                  {categories.map((cat) => (
+                    <span
+                      key={cat}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-200 dark:bg-slate-700 text-[10px] text-slate-800 dark:text-[var(--text)] flex-shrink-0 max-w-[150px]"
+                    >
+                      <span className="truncate">{cat}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeCategory(cat)}
+                        className="text-[10px]"
+                      >
+                        ✕
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Form tambahan (WhatsApp, dll) */}
@@ -577,7 +631,7 @@ export default function DasborAdmins() {
               )}
             </div>
 
-            {/* Wajib login checkbox */}
+            {/* Wajib login checkbox – paling bawah sebelum tombol */}
             <div className="grid gap-1">
               <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
                 Akses produk
@@ -593,46 +647,6 @@ export default function DasborAdmins() {
                   Wajib login untuk melihat / membeli produk ini (default aktif)
                 </span>
               </label>
-            </div>
-
-            {/* KATEGORI */}
-            <div className="grid gap-1">
-              <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                Katalog / kategori – tekan Enter untuk menambah beberapa kategori
-              </label>
-              <div className="input">
-                <input
-                  ref={categoryInputRef}
-                  className="bg-transparent outline-none border-none text-xs w-full"
-                  value={categoryInput}
-                  onChange={(e) => setCategoryInput(e.target.value)}
-                  onKeyDown={handleCategoryKeyDown}
-                  placeholder={
-                    categories.length === 0
-                      ? "Contoh: elektronik, fashion, teknologi"
-                      : ""
-                  }
-                />
-              </div>
-              {categories.length > 0 && (
-                <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
-                  {categories.map((cat) => (
-                    <span
-                      key={cat}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-200 dark:bg-slate-700 text-[10px] text-slate-800 dark:text-[var(--text)] flex-shrink-0 max-w-[150px]"
-                    >
-                      <span className="truncate">{cat}</span>
-                      <button
-                        type="button"
-                        onClick={() => removeCategory(cat)}
-                        className="text-[10px]"
-                      >
-                        ✕
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
             </div>
 
             {/* FOOTER FORM */}
