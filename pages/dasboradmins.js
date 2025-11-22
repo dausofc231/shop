@@ -270,122 +270,167 @@ export default function DasborAdmins() {
 
   if (!adminData) return null;
 
-// === HITUNG HASIL HARGA SETELAH DISKON (UNTUK DITAMPILKAN SAJA) ===
-const basePriceDigits = priceInput.replace(/\D/g, "");
-const discountNumberPreview = discountInput ? Number(discountInput) : 0;
-let finalPricePreview = "";
-if (basePriceDigits) {
-  const base = Number(basePriceDigits);
-  const disc = isNaN(discountNumberPreview) ? 0 : discountNumberPreview;
-  const discounted = Math.round((base * (100 - disc)) / 100);
-  finalPricePreview = formatWithDots(String(discounted));
-}
+  // === HITUNG HASIL HARGA SETELAH DISKON (UNTUK DITAMPILKAN SAJA) ===
+  const basePriceDigits = priceInput.replace(/\D/g, "");
+  const discountNumberPreview = discountInput ? Number(discountInput) : 0;
+  let finalPricePreview = "";
+  if (basePriceDigits) {
+    const base = Number(basePriceDigits);
+    const disc = isNaN(discountNumberPreview) ? 0 : discountNumberPreview;
+    const discounted = Math.round((base * (100 - disc)) / 100);
+    finalPricePreview = formatWithDots(String(discounted));
+  }
 
-return (
-  <div className="min-h-screen bg-slate-100 dark:bg-bg-dark text-slate-900 dark:text-[var(--text)] text-sm">
-    {/* NAVBAR dkk tetap */}
-    <main className="max-w-5xl mx-auto px-4 py-8">
-      <div className="card">
-        {/* header card tetap */}
-
-        {/* FORM */}
-        <form onSubmit={handleAddProduct} className="grid gap-4">
-          {/* Nama Produk */}
-          <div className="grid gap-1">
-            <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-              Nama Produk
-            </label>
-            <input
-              className="input"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Nama produk"
-            />
+  return (
+    <div className="min-h-screen bg-slate-100 dark:bg-bg-dark text-slate-900 dark:text-[var(--text)] text-sm">
+      {/* NAVBAR */}
+      <header className="w-full border-b border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-bg-dark/80 backdrop-blur sticky top-0 z-10">
+        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="font-semibold text-lg tracking-tight text-slate-900 dark:text-[var(--text)]">
+            Shop<span className="text-primary">Lite</span> Admin
           </div>
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="h-9 w-9 flex items-center justify-center rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-card-dark"
+            aria-label="Dark / light mode"
+          >
+            {theme === "dark" ? (
+              <FiSun className="text-primary" />
+            ) : (
+              <FiMoon className="text-slate-700" />
+            )}
+          </button>
+        </div>
+      </header>
 
-          {/* Deskripsi Produk */}
-          <div className="grid gap-1">
-            <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-              Deskripsi Produk
-            </label>
-            <textarea
-              className="input min-h-[80px]"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Deskripsi singkat produk"
-            />
-          </div>
-
-          {/* HARGA + DISKON + HASIL (3 kolom 1 baris) */}
-          <div className="grid grid-cols-3 gap-4">
-            {/* Harga (Nominal) */}
-            <div className="grid gap-1">
-              <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                Harga (Nominal)
-              </label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-[var(--text-secondary)]">
-                  Rp
-                </span>
-                <input
-                  className="input pl-20"
-                  value={priceInput}
-                  onChange={handlePriceChange}
-                  placeholder="1.000"
-                />
-              </div>
+      <main className="max-w-5xl mx-auto px-4 py-8">
+        <div className="card">
+          {/* header card */}
+          <div className="flex items-start justify-between gap-2 mb-4">
+            <div>
+              <h1 className="text-lg font-semibold mb-1 text-slate-900 dark:text-[var(--text)]">
+                Tambah Produk
+              </h1>
+              <p className="text-xs text-slate-600 dark:text-[var(--text-secondary)]">
+                Role: <span className="font-semibold">{adminData.role}</span> |{" "}
+                {adminData.email}
+              </p>
             </div>
-
-            {/* Diskon (%) */}
-            <div className="grid gap-1">
-              <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                Diskon (%)
-              </label>
-              <div className="flex items-center gap-1 mt-1 sm:mt-0">
-                <input
-                  className="input w-[70px] text-right"
-                  value={discountInput}
-                  onChange={handleDiscountChange}
-                  placeholder="0"
-                />
-                <span className="text-xs text-slate-500 dark:text-[var(--text-secondary)]">
-                  %
-                </span>
-              </div>
-            </div>
-
-            {/* Hasil Setelah Diskon (readonly, abu-abu) */}
-            <div className="grid gap-1">
-              <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                Harga Setelah Diskon (Hasil)
-              </label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-[var(--text-secondary)]">
-                  Rp
-                </span>
-                <input
-                  className="input pl-20 bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed"
-                  value={finalPricePreview}
-                  disabled
-                  readOnly
-                  placeholder="0"
-                />
-              </div>
+            <div className="flex flex-col gap-2 text-xs">
+              <Link
+                href="/"
+                className="px-3 py-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-bg-dark text-slate-800 dark:text-[var(--text)] text-center"
+              >
+                Home / Katalog
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="px-3 py-1 rounded-lg border border-red-500 text-red-500 text-center"
+              >
+                Logout
+              </button>
             </div>
           </div>
 
-          {/* Stok Produk */}
-          <div className="grid gap-1">
-            <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-              Stok Produk
-            </label>
-            <input
-              className="input"
-              value={stockInput}
-              onChange={handleStockChange}
-              placeholder="25"
-            />
-          </div>
+          {/* FORM */}
+          <form onSubmit={handleAddProduct} className="grid gap-4">
+            {/* Nama Produk */}
+            <div className="grid gap-1">
+              <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                Nama Produk
+              </label>
+              <input
+                className="input"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Nama produk"
+              />
+            </div>
+
+            {/* Deskripsi Produk */}
+            <div className="grid gap-1">
+              <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                Deskripsi Produk
+              </label>
+              <textarea
+                className="input min-h-[80px]"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Deskripsi singkat produk"
+              />
+            </div>
+
+            {/* HARGA + DISKON + HASIL (3 kolom 1 baris) */}
+            <div className="grid grid-cols-3 gap-4">
+              {/* Harga (Nominal) */}
+              <div className="grid gap-1">
+                <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                  Harga (Nominal)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-[var(--text-secondary)]">
+                    Rp
+                  </span>
+                  <input
+                    className="input pl-28"
+                    value={priceInput}
+                    onChange={handlePriceChange}
+                    placeholder="1.000"
+                  />
+                </div>
+              </div>
+
+              {/* Diskon (%) */}
+              <div className="grid gap-1">
+                <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                  Diskon (%)
+                </label>
+                <div className="flex items-center gap-1 mt-1 sm:mt-0">
+                  <input
+                    className="input w-[70px] text-right"
+                    value={discountInput}
+                    onChange={handleDiscountChange}
+                    placeholder="0"
+                  />
+                  <span className="text-xs text-slate-500 dark:text-[var(--text-secondary)]">
+                    %
+                  </span>
+                </div>
+              </div>
+
+              {/* Hasil Setelah Diskon (readonly, abu-abu) */}
+              <div className="grid gap-1">
+                <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                  Harga Setelah Diskon (Hasil)
+                </label>
+                <div className="relative">
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-[var(--text-secondary)]">
+                    Rp
+                  </span>
+                  <input
+                    className="input pl-28 bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed"
+                    value={finalPricePreview}
+                    disabled
+                    readOnly
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Stok Produk */}
+            <div className="grid gap-1">
+              <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                Stok Produk
+              </label>
+              <input
+                className="input"
+                value={stockInput}
+                onChange={handleStockChange}
+                placeholder="25"
+              />
+            </div>
 
             {/* Foto Produk */}
             <div className="grid gap-1">
