@@ -219,7 +219,6 @@ export default function Home() {
     return name.includes(term) || desc.includes(term);
   });
 
-  // menyesuaikan struktur data baru: discount = number, labels = array
   if (selectedFilter === "diskon") {
     filteredProducts = filteredProducts.filter((p) => {
       const hasDiscountNumber =
@@ -283,7 +282,6 @@ export default function Home() {
       {/* PANEL MENU (KANAN) */}
       {menuOpen && (
         <div className="fixed inset-0 z-40">
-          {/* overlay */}
           <div
             className="absolute inset-0 bg-black/40"
             onClick={() => {
@@ -293,9 +291,7 @@ export default function Home() {
             }}
           />
 
-          {/* PANEL */}
           <div className="absolute right-0 top-0 h-full w-64 bg-white dark:bg-card-dark shadow-xl p-4 flex flex-col gap-3">
-            {/* ROW AKUN */}
             {userDoc ? (
               <button
                 className="flex items-center gap-3 text-left"
@@ -329,7 +325,6 @@ export default function Home() {
 
             <div className="border-t border-slate-200 dark:border-slate-700" />
 
-            {/* NAV MENU */}
             <nav className="flex flex-col gap-2 text-sm">
               <Link
                 href="/"
@@ -362,21 +357,17 @@ export default function Home() {
               )}
 
               {!userDoc && (
-                <>
-                  <Link
-                    href="/auth/login"
-                    className="hover:underline mt-2 text-slate-800 dark:text-[var(--text)]"
-                  >
-                    Login
-                  </Link>
-                </>
+                <Link
+                  href="/auth/login"
+                  className="hover:underline mt-2 text-slate-800 dark:text-[var(--text)]"
+                >
+                  Login
+                </Link>
               )}
             </nav>
 
-            {/* POPUP PROFIL */}
             {profileOpen && userDoc && (
               <div className="absolute inset-0 flex items-center justify-center">
-                {/* klik luar popup */}
                 <div
                   className="absolute inset-0"
                   onClick={() => {
@@ -384,12 +375,10 @@ export default function Home() {
                     setShowAvatarInput(false);
                   }}
                 />
-                {/* CARD */}
                 <div
                   className="relative z-10 w-full max-w-xs rounded-xl p-4 bg-white dark:bg-card-dark border border-slate-200 dark:border-slate-700"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  {/* HEADER */}
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <p className="text-xs text-slate-600 dark:text-[var(--text-secondary)]">
@@ -408,7 +397,6 @@ export default function Home() {
                     </p>
                   </div>
 
-                  {/* FOTO PROFIL */}
                   <div className="w-full flex justify-center mb-4">
                     <button
                       onClick={() => setShowAvatarInput((v) => !v)}
@@ -425,7 +413,6 @@ export default function Home() {
                     </button>
                   </div>
 
-                  {/* NAMA + EMAIL */}
                   <p className="text-xs font-semibold text-center text-slate-900 dark:text-[var(--text)] mb-1">
                     {userDoc.username}
                   </p>
@@ -433,12 +420,10 @@ export default function Home() {
                     {userDoc.email}
                   </p>
 
-                  {/* UID CARD */}
                   <div className="rounded-lg px-3 py-2 text-[11px] bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-[var(--text)] mb-4">
                     UID: {userDoc.uid}
                   </div>
 
-                  {/* INPUT URL ICON */}
                   {showAvatarInput && (
                     <div className="grid gap-1 mb-3">
                       <label className="text-[11px] text-slate-700 dark:text-[var(--text-secondary)]">
@@ -478,7 +463,6 @@ export default function Home() {
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
           >
-            {/* inner flex yang digeser */}
             <div
               className="absolute inset-0 flex transition-transform duration-500 ease-out"
               style={{ transform: `translateX(-${activeSlide * 100}%)` }}
@@ -494,7 +478,6 @@ export default function Home() {
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-black/35" />
-                  {/* konten di pojok kiri */}
                   <div className="absolute inset-0 flex flex-col justify-center px-4 sm:px-6">
                     <h1 className="text-base sm:text-lg font-semibold text-white mb-1">
                       {slide.title}
@@ -513,7 +496,6 @@ export default function Home() {
               ))}
             </div>
 
-            {/* tombol kiri/kanan */}
             <button
               onClick={goPrevSlide}
               className="absolute left-2 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-black/40 flex items-center justify-center text-white text-xs"
@@ -527,7 +509,6 @@ export default function Home() {
               <FiChevronRight />
             </button>
 
-            {/* dots indikator */}
             <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-2">
               {sliderData.map((slide, idx) => (
                 <button
@@ -554,7 +535,6 @@ export default function Home() {
         {/* SEARCH */}
         <section className="mb-3">
           <div className="relative max-w-md mx-auto">
-            {/* icon + placeholder custom */}
             {!searchFocused && !searchTerm && (
               <div className="pointer-events-none absolute inset-y-0 left-3 flex items-center gap-2 text-slate-400 dark:text-[var(--text-secondary)] text-xs sm:text-sm">
                 <FiSearch />
@@ -654,10 +634,10 @@ export default function Home() {
                 return (
                   <div
                     key={p.id}
-                    className="card p-2 flex flex-col overflow-hidden"
+                    className="rounded-2xl bg-white dark:bg-card-dark shadow-sm border border-slate-200/60 dark:border-slate-700 flex flex-col overflow-hidden"
                   >
                     {/* IMAGE + LABEL ATAS */}
-                    <div className="relative w-full aspect-[4/3] bg-slate-200 dark:bg-slate-700 rounded-xl overflow-hidden">
+                    <div className="relative w-full aspect-[4/3] bg-slate-200 dark:bg-slate-700 overflow-hidden">
                       {mainImage ? (
                         <img
                           src={mainImage}
@@ -670,7 +650,6 @@ export default function Home() {
                         </div>
                       )}
 
-                      {/* LABEL ATAS (BARU / POPULER) */}
                       {topLabel && (
                         <span className="absolute top-2 right-2 px-2 py-1 rounded-full bg-primary/90 text-[10px] font-semibold text-white shadow-sm">
                           {topLabel}
@@ -678,28 +657,25 @@ export default function Home() {
                       )}
                     </div>
 
-                    {/* BAR DISKON PANJANG (DI ANTARA IMAGE & CONTENT) */}
+                    {/* BAR DISKON */}
                     {hasDiscount && (
-                      <div className="mt-2 mb-1 px-3 py-1 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/40 text-[11px] font-medium text-red-600 dark:text-red-300">
+                      <div className="mt-2 mx-2 mb-1 px-3 py-1 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/40 text-[11px] font-medium text-red-600 dark:text-red-300">
                         Diskon {discountPercent}%
                       </div>
                     )}
 
                     {/* CONTENT */}
-                    <div className="mt-2 flex flex-col gap-1 flex-1">
-                      {/* TITLE */}
+                    <div className="mt-2 px-2 pb-3 flex flex-col gap-1 flex-1">
                       <h3 className="font-semibold text-sm text-slate-900 dark:text-[var(--text)] truncate">
                         {p.name}
                       </h3>
 
-                      {/* HARGA: hanya hasil akhir */}
                       <div className="text-xs">
                         <span className="font-semibold text-primary">
                           Rp {finalPrice.toLocaleString("id-ID")}
                         </span>
                       </div>
 
-                      {/* DESKRIPSI (dipotong kalau kepanjangan) */}
                       {p.description && (
                         <p className="text-xs text-slate-600 dark:text-[var(--text-secondary)] line-clamp-2 overflow-hidden">
                           {p.description}
