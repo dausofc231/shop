@@ -411,31 +411,31 @@ export default function DasborAdmins() {
                     Rp
                   </span>
                   <input
-                    className="input pl-14"  // Diperbesar sedikit agar angka tidak terlalu dekat dengan "Rp"
+                    className="input pl-14"
                     value={priceInput}
                     onChange={handlePriceChange}
                     placeholder="1.000"
                   />
                 </div>
               </div>
-            </div>
 
-            {/* Diskon */}
-            <div className="grid gap-1 items-end">
-              <div>
-                <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-            Diskon
-                </label>
-                <div className="relative mt-1">
-                  <input
-                    className="input pr-8 w-[60px] sm:w-[80px]"  // diperkecil
-                    value={discountInput}
-                    onChange={handleDiscountChange}
-                    placeholder="0"
-                  />
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-[var(--text-secondary)]">
-                    %
-                  </span>
+              {/* Diskon */}
+              <div className="grid gap-1 items-end">
+                <div>
+                  <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                    Diskon
+                  </label>
+                  <div className="relative mt-1">
+                    <input
+                      className="input pr-8 w-[100px] sm:w-[120px]"
+                      value={discountInput}
+                      onChange={handleDiscountChange}
+                      placeholder="0"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-[var(--text-secondary)]">
+                      %
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
