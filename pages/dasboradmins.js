@@ -134,14 +134,25 @@ export default function DasborAdmins() {
     setDiscountInput(String(num));
   };
 
-  // === FOTO PRODUK (CHIP DALAM 1 FIELD, kayak kategori) ===
+  // === FOTO PRODUK (CHIP DALAM 1 FIELD) ===
+  const addImage = () => {
+    const val = imageInput.trim();
+    if (!val) return;
+    setImages((prev) => [...prev, val]);
+    setImageInput("");
+  };
+
   const handleImageKeyDown = (e) => {
-    if (e.key === "Enter") {
+    if (e.key === "Enter" || e.keyCode === 13) {
       e.preventDefault();
-      const val = imageInput.trim();
-      if (!val) return;
-      setImages((prev) => [...prev, val]);
-      setImageInput("");
+      addImage();
+    }
+  };
+
+  const handleImageBlur = () => {
+    // kalau user tap di luar input dan masih ada teks → auto jadikan chip
+    if (imageInput.trim()) {
+      addImage();
     }
   };
 
@@ -151,7 +162,7 @@ export default function DasborAdmins() {
 
   // === KATEGORI (CHIP) ===
   const handleCategoryKeyDown = (e) => {
-    if (e.key === "Enter") {
+    if (e.key === "Enter" || e.keyCode === 13) {
       e.preventDefault();
       const val = categoryInput.trim();
       if (!val) return;
@@ -167,23 +178,33 @@ export default function DasborAdmins() {
   };
 
   // === FORM TAMBAHAN FIELD (WhatsApp, dll) ===
+  const addExtraField = () => {
+    const label = extraFieldInput.trim();
+    if (!label) return;
+    const id = Date.now().toString() + Math.random().toString(16).slice(2);
+    setExtraFields((prev) => [
+      ...prev,
+      {
+        id,
+        label,
+        type: "text",
+        required: false,
+        requireHttps: false,
+      },
+    ]);
+    setExtraFieldInput("");
+  };
+
   const handleExtraFieldKeyDown = (e) => {
-    if (e.key === "Enter") {
+    if (e.key === "Enter" || e.keyCode === 13) {
       e.preventDefault();
-      const label = extraFieldInput.trim();
-      if (!label) return;
-      const id = Date.now().toString() + Math.random().toString(16).slice(2);
-      setExtraFields((prev) => [
-        ...prev,
-        {
-          id,
-          label,
-          type: "text",
-          required: false,
-          requireHttps: false,
-        },
-      ]);
-      setExtraFieldInput("");
+      addExtraField();
+    }
+  };
+
+  const handleExtraFieldBlur = () => {
+    if (extraFieldInput.trim()) {
+      addExtraField();
     }
   };
 
@@ -415,7 +436,8 @@ export default function DasborAdmins() {
             {/* Foto produk (1 kolom, chip horizontal scroll) */}
             <div className="grid gap-1">
               <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                Foto produk (URL) – tekan Enter untuk menambah beberapa foto
+                Foto produk (URL) – tekan Enter, atau cukup ketuk di luar
+                input untuk menambah
               </label>
               <div className="input flex items-center gap-2 overflow-x-auto whitespace-nowrap min-h-[42px]">
                 {images.map((url) => (
@@ -438,6 +460,7 @@ export default function DasborAdmins() {
                   value={imageInput}
                   onChange={(e) => setImageInput(e.target.value)}
                   onKeyDown={handleImageKeyDown}
+                  onBlur={handleImageBlur}
                   placeholder={
                     images.length === 0
                       ? "https://example.com/foto-produk.jpg"
@@ -454,7 +477,7 @@ export default function DasborAdmins() {
             <div className="grid gap-1">
               <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
                 Form tambahan (contoh: WhatsApp, Link Toko, dll) – ketik nama
-                field lalu Enter
+                field lalu Enter, atau ketuk di luar input
               </label>
               <div className="input flex items-center gap-2 min-h-[42px]">
                 <input
@@ -462,6 +485,7 @@ export default function DasborAdmins() {
                   value={extraFieldInput}
                   onChange={(e) => setExtraFieldInput(e.target.value)}
                   onKeyDown={handleExtraFieldKeyDown}
+                  onBlur={handleExtraFieldBlur}
                   placeholder="Contoh: WhatsApp, Instagram, Website"
                 />
               </div>
