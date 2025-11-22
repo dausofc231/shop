@@ -219,12 +219,22 @@ export default function Home() {
     return name.includes(term) || desc.includes(term);
   });
 
+  // menyesuaikan struktur data baru: discount = number, labels = array
   if (selectedFilter === "diskon") {
-    filteredProducts = filteredProducts.filter(
-      (p) => p.discount === true || p.isDiscount === true
-    );
+    filteredProducts = filteredProducts.filter((p) => {
+      const hasDiscountNumber =
+        typeof p.discount === "number" && p.discount > 0;
+      const hasDiscountLabel =
+        Array.isArray(p.labels) && p.labels.includes("diskon");
+      return hasDiscountNumber || hasDiscountLabel;
+    });
   } else if (selectedFilter === "populer") {
-    filteredProducts = filteredProducts.filter((p) => p.popular === true);
+    filteredProducts = filteredProducts.filter((p) => {
+      const fromFlag = p.popular === true;
+      const fromLabel =
+        Array.isArray(p.labels) && p.labels.includes("populer");
+      return fromFlag || fromLabel;
+    });
   }
 
   if (selectedFilter === "termurah") {
@@ -359,12 +369,6 @@ export default function Home() {
                   >
                     Login
                   </Link>
-                  <Link
-                    href="/auth/register"
-                    className="hover:underline text-slate-800 dark:text-[var(--text)]"
-                  >
-                    Register
-                  </Link>
                 </>
               )}
             </nav>
@@ -394,7 +398,7 @@ export default function Home() {
                       </p>
                       <p className="text-xs text-slate-600 dark:text-[var(--text-secondary)]">
                         Saldo:{" "}
-                        <span className="font-semibold">
+                          <span className="font-semibold">
                           Rp {Number(userDoc.saldo || 0).toLocaleString("id-ID")}
                         </span>
                       </p>
@@ -624,30 +628,106 @@ export default function Home() {
             </p>
           ) : (
             <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
-              {filteredProducts.map((p) => (
-                <div key={p.id} className="card flex flex-col">
-                  <h3 className="font-semibold text-sm text-slate-900 dark:text-[var(--text)]">
-                    {p.name}
-                  </h3>
-                  {p.description && (
-                    <p className="text-xs text-slate-600 dark:text-[var(--text-secondary)] mt-1 mb-3">
-                      {p.description}
-                    </p>
-                  )}
-                  <div className="flex justify-between items-center text-xs mt-auto">
-                    <span className="font-semibold text-primary">
-                      {p.price
-                        ? `Rp ${Number(p.price).toLocaleString("id-ID")}`
-                        : "Harga tidak tersedia"}
-                    </span>
-                    {p.category && (
-                      <span className="px-2 py-1 rounded-full border border-slate-300 dark:border-slate-600 text-[10px] text-slate-700 dark:text-[var(--text-secondary)]">
-                        {p.category}
-                      </span>
-                    )}
+              {filteredProducts.map((p) => {
+                const mainImage =
+                  Array.isArray(p.images) && p.images.length > 0
+                    ? p.images[0]
+                    : null;
+
+                const discountPercent =
+                  typeof p.discount === "number" ? p.discount : 0;
+                const hasDiscount = discountPercent > 0;
+
+                const basePrice = Number(p.price || 0);
+                const finalPrice = hasDiscount
+                  ? Math.round((basePrice * (100 - discountPercent)) / 100)
+                  : basePrice;
+
+                const topLabel = Array.isArray(p.labels)
+                  ? p.labels.includes("populer")
+                    ? "Populer"
+                    : p.labels.includes("baru")
+                    ? "Baru"
+                    : null
+                  : null;
+
+                const firstCategory =
+                  Array.isArray(p.categories) && p.categories.length > 0
+                    ? p.categories[0]
+                    : null;
+
+                return (
+                  <div
+                    key={p.id}
+                    className="card flex flex-col overflow-hidden"
+                  >
+                    {/* IMAGE + LABELS */}
+                    <div className="relative w-full aspect-[4/3] bg-slate-200 dark:bg-slate-700">
+                      {mainImage ? (
+                        <img
+                          src={mainImage}
+                          alt={p.name || "Product image"}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-[11px] text-slate-500 dark:text-[var(--text-secondary)]">
+                          Tidak ada gambar
+                        </div>
+                      )}
+
+                      {/* LABEL ATAS (BARU / POPULER) */}
+                      {topLabel && (
+                        <span className="absolute top-2 right-2 px-2 py-1 rounded-full bg-primary/90 text-[10px] font-semibold text-white shadow-sm">
+                          {topLabel}
+                        </span>
+                      )}
+
+                      {/* LABEL BAWAH (DISKON) */}
+                      {hasDiscount && (
+                        <span className="absolute bottom-2 left-2 px-2 py-1 rounded-full bg-red-500/90 text-[10px] font-semibold text-white shadow-sm">
+                          -{discountPercent}%
+                        </span>
+                      )}
+                    </div>
+
+                    {/* CONTENT */}
+                    <div className="mt-3 flex flex-col gap-1 flex-1">
+                      {/* TITLE */}
+                      <h3 className="font-semibold text-sm text-slate-900 dark:text-[var(--text)] truncate">
+                        {p.name}
+                      </h3>
+
+                      {/* HARGA: lama | terbaru */}
+                      <div className="flex items-baseline gap-2 text-xs">
+                        {hasDiscount && basePrice > 0 && (
+                          <span className="line-through text-slate-400 dark:text-[var(--text-secondary)]">
+                            Rp {basePrice.toLocaleString("id-ID")}
+                          </span>
+                        )}
+                        <span className="font-semibold text-primary">
+                          Rp {finalPrice.toLocaleString("id-ID")}
+                        </span>
+                      </div>
+
+                      {/* DESKRIPSI (dipotong kalau kepanjangan) */}
+                      {p.description && (
+                        <p className="text-xs text-slate-600 dark:text-[var(--text-secondary)] line-clamp-2 overflow-hidden">
+                          {p.description}
+                        </p>
+                      )}
+
+                      {/* KATEGORI (opsional) */}
+                      {firstCategory && (
+                        <div className="mt-2">
+                          <span className="inline-flex px-2 py-1 rounded-full border border-slate-300 dark:border-slate-600 text-[10px] text-slate-700 dark:text-[var(--text-secondary)]">
+                            {firstCategory}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </section>
