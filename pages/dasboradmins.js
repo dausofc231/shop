@@ -30,29 +30,24 @@ export default function DasborAdmins() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
 
-  const [priceInput, setPriceInput] = useState("");   // tampilan Rp 150.000
-  const [discountInput, setDiscountInput] = useState(""); // angka 0-100
-  const [stockInput, setStockInput] = useState("");   // tampilan 100.000
+  const [priceInput, setPriceInput] = useState(""); // "150.000"
+  const [discountInput, setDiscountInput] = useState(""); // "10"
+  const [stockInput, setStockInput] = useState(""); // "25"
 
   const [requireLogin, setRequireLogin] = useState(true); // default wajib
 
-  const [mainImages, setMainImages] = useState([]);
-  const [mainImageInput, setMainImageInput] = useState("");
+  // FOTO PRODUK (1 kolom, bisa banyak URL)
+  const [images, setImages] = useState([]);
+  const [imageInput, setImageInput] = useState("");
 
-  const [extraImages, setExtraImages] = useState([]);
-  const [extraImageInput, setExtraImageInput] = useState("");
-
+  // KATEGORI
   const [categories, setCategories] = useState([]);
   const [categoryInput, setCategoryInput] = useState("");
 
-  // extra form fields (WhatsApp, Instagram, dll)
+  // FORM TAMBAHAN (WhatsApp, dll)
   const [extraFieldInput, setExtraFieldInput] = useState("");
   const [extraFields, setExtraFields] = useState([]);
   // { id, label, type, required, requireHttps }
-
-  // label produk (diskon, baru, populer, dll)
-  const [labelInput, setLabelInput] = useState("");
-  const [labels, setLabels] = useState([]);
 
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -116,7 +111,7 @@ export default function DasborAdmins() {
     router.push("/");
   };
 
-  // === HANDLER HARGA, DISKON, STOK ===
+  // === HARGA, DISKON, STOK ===
   const handlePriceChange = (e) => {
     const digits = e.target.value.replace(/\D/g, "");
     setPriceInput(formatWithDots(digits));
@@ -139,7 +134,22 @@ export default function DasborAdmins() {
     setDiscountInput(String(num));
   };
 
-  // === KATEGORI (KATALOG) CHIP ===
+  // === FOTO PRODUK (CHIP DALAM 1 FIELD) ===
+  const handleImageKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const val = imageInput.trim();
+      if (!val) return;
+      setImages((prev) => [...prev, val]);
+      setImageInput("");
+    }
+  };
+
+  const removeImage = (url) => {
+    setImages((prev) => prev.filter((u) => u !== url));
+  };
+
+  // === KATEGORI (CHIP) ===
   const handleCategoryKeyDown = (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -156,37 +166,7 @@ export default function DasborAdmins() {
     setCategories((prev) => prev.filter((c) => c !== cat));
   };
 
-  // === FOTO UTAMA CHIP ===
-  const handleMainImageKeyDown = (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      const val = mainImageInput.trim();
-      if (!val) return;
-      setMainImages((prev) => [...prev, val]);
-      setMainImageInput("");
-    }
-  };
-
-  const removeMainImage = (url) => {
-    setMainImages((prev) => prev.filter((u) => u !== url));
-  };
-
-  // === FOTO TAMBAHAN CHIP ===
-  const handleExtraImageKeyDown = (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      const val = extraImageInput.trim();
-      if (!val) return;
-      setExtraImages((prev) => [...prev, val]);
-      setExtraImageInput("");
-    }
-  };
-
-  const removeExtraImage = (url) => {
-    setExtraImages((prev) => prev.filter((u) => u !== url));
-  };
-
-  // === EXTRA FORM FIELDS (WhatsApp, dll) ===
+  // === FORM TAMBAHAN FIELD (WhatsApp, dll) ===
   const handleExtraFieldKeyDown = (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -198,7 +178,7 @@ export default function DasborAdmins() {
         {
           id,
           label,
-          type: "text", // text | tel | url | number
+          type: "text",
           required: false,
           requireHttps: false,
         },
@@ -217,23 +197,6 @@ export default function DasborAdmins() {
     setExtraFields((prev) => prev.filter((f) => f.id !== id));
   };
 
-  // === LABEL CHIP (diskon, populer, baru, dll) ===
-  const handleLabelKeyDown = (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      const val = labelInput.trim();
-      if (!val) return;
-      if (!labels.includes(val)) {
-        setLabels((prev) => [...prev, val]);
-      }
-      setLabelInput("");
-    }
-  };
-
-  const removeLabel = (lbl) => {
-    setLabels((prev) => prev.filter((l) => l !== lbl));
-  };
-
   const resetForm = () => {
     setName("");
     setDescription("");
@@ -241,16 +204,12 @@ export default function DasborAdmins() {
     setDiscountInput("");
     setStockInput("");
     setRequireLogin(true);
-    setMainImages([]);
-    setMainImageInput("");
-    setExtraImages([]);
-    setExtraImageInput("");
+    setImages([]);
+    setImageInput("");
     setCategories([]);
     setCategoryInput("");
     setExtraFieldInput("");
     setExtraFields([]);
-    setLabelInput("");
-    setLabels([]);
   };
 
   const handleAddProduct = async (e) => {
@@ -259,6 +218,11 @@ export default function DasborAdmins() {
 
     if (!name) {
       setMessage("Nama produk wajib diisi.");
+      return;
+    }
+
+    if (images.length === 0) {
+      setMessage("Minimal 1 foto produk wajib diisi.");
       return;
     }
 
@@ -276,14 +240,10 @@ export default function DasborAdmins() {
     try {
       setSaving(true);
 
-      // labels final (otomatis diskon + baru)
-      let finalLabels = [...labels];
-      if (discountNumber > 0 && !finalLabels.includes("diskon")) {
-        finalLabels.push("diskon");
-      }
-      if (!finalLabels.includes("baru")) {
-        finalLabels.push("baru");
-      }
+      // label otomatis: diskon + baru
+      let finalLabels = [];
+      if (discountNumber > 0) finalLabels.push("diskon");
+      finalLabels.push("baru");
 
       await addDoc(collection(db, "products"), {
         name,
@@ -293,8 +253,7 @@ export default function DasborAdmins() {
         stock: stockNumber,
         requireLogin,
         categories,
-        mainImages,
-        extraImages,
+        images,
         extraFields,
         labels: finalLabels,
         createdAt: serverTimestamp(),
@@ -401,8 +360,8 @@ export default function DasborAdmins() {
               />
             </div>
 
-            {/* Harga + Diskon + Stok sebaris */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {/* Harga + Diskon satu baris (kanan kiri) */}
+            <div className="grid grid-cols-2 gap-4">
               {/* Harga */}
               <div className="grid gap-1">
                 <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
@@ -438,36 +397,36 @@ export default function DasborAdmins() {
                   </span>
                 </div>
               </div>
-
-              {/* Stok */}
-              <div className="grid gap-1">
-                <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                  Stok
-                </label>
-                <input
-                  className="input"
-                  value={stockInput}
-                  onChange={handleStockChange}
-                  placeholder="25"
-                />
-              </div>
             </div>
 
-            {/* Foto produk utama */}
+            {/* Stok (sendiri) */}
             <div className="grid gap-1">
               <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                Foto produk (URL) – Enter untuk menambah beberapa foto
+                Stok
+              </label>
+              <input
+                className="input"
+                value={stockInput}
+                onChange={handleStockChange}
+                placeholder="25"
+              />
+            </div>
+
+            {/* Foto produk (1 kolom, chip) */}
+            <div className="grid gap-1">
+              <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                Foto produk (URL) – tekan Enter untuk menambah beberapa foto
               </label>
               <div className="input flex flex-wrap items-center gap-1 min-h-[42px]">
-                {mainImages.map((url) => (
+                {images.map((url) => (
                   <span
                     key={url}
                     className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-200 dark:bg-slate-700 text-[10px] text-slate-800 dark:text-[var(--text)]"
                   >
-                    {url.length > 20 ? url.slice(0, 17) + "..." : url}
+                    {url.length > 22 ? url.slice(0, 19) + "..." : url}
                     <button
                       type="button"
-                      onClick={() => removeMainImage(url)}
+                      onClick={() => removeImage(url)}
                       className="text-[10px]"
                     >
                       ✕
@@ -476,58 +435,26 @@ export default function DasborAdmins() {
                 ))}
                 <input
                   className="flex-1 bg-transparent outline-none border-none text-xs"
-                  value={mainImageInput}
-                  onChange={(e) => setMainImageInput(e.target.value)}
-                  onKeyDown={handleMainImageKeyDown}
+                  value={imageInput}
+                  onChange={(e) => setImageInput(e.target.value)}
+                  onKeyDown={handleImageKeyDown}
                   placeholder={
-                    mainImages.length === 0
-                      ? "https://example.com/foto-utama.jpg"
+                    images.length === 0
+                      ? "https://example.com/foto-produk.jpg"
                       : ""
                   }
                 />
               </div>
+              <p className="text-[10px] text-slate-500 dark:text-[var(--text-secondary)]">
+                Minimal 1 URL foto. Bisa lebih dari 10 URL.
+              </p>
             </div>
 
-            {/* Foto tambahan */}
+            {/* Form tambahan (WhatsApp, dll) */}
             <div className="grid gap-1">
               <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                Foto tambahan (URL) – opsional
-              </label>
-              <div className="input flex flex-wrap items-center gap-1 min-h-[42px]">
-                {extraImages.map((url) => (
-                  <span
-                    key={url}
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-200 dark:bg-slate-700 text-[10px] text-slate-800 dark:text-[var(--text)]"
-                  >
-                    {url.length > 20 ? url.slice(0, 17) + "..." : url}
-                    <button
-                      type="button"
-                      onClick={() => removeExtraImage(url)}
-                      className="text-[10px]"
-                    >
-                      ✕
-                    </button>
-                  </span>
-                ))}
-                <input
-                  className="flex-1 bg-transparent outline-none border-none text-xs"
-                  value={extraImageInput}
-                  onChange={(e) => setExtraImageInput(e.target.value)}
-                  onKeyDown={handleExtraImageKeyDown}
-                  placeholder={
-                    extraImages.length === 0
-                      ? "https://example.com/foto-lain.jpg"
-                      : ""
-                  }
-                />
-              </div>
-            </div>
-
-            {/* Form tambahan → definisi field */}
-            <div className="grid gap-1">
-              <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                Form tambahan (contoh: WhatsApp, Link Toko, dsb) – Enter untuk
-                menambah
+                Form tambahan (contoh: WhatsApp, Link Toko, dll) – ketik nama
+                field lalu Enter
               </label>
               <div className="input flex flex-wrap items-center gap-1 min-h-[42px] mb-2">
                 <input
@@ -535,7 +462,7 @@ export default function DasborAdmins() {
                   value={extraFieldInput}
                   onChange={(e) => setExtraFieldInput(e.target.value)}
                   onKeyDown={handleExtraFieldKeyDown}
-                  placeholder="Tulis nama field lalu Enter (misal: WhatsApp)"
+                  placeholder="Contoh: WhatsApp, Instagram, Website"
                 />
               </div>
 
@@ -621,16 +548,15 @@ export default function DasborAdmins() {
                   onChange={(e) => setRequireLogin(e.target.checked)}
                 />
                 <span>
-                  Wajib login untuk melihat / membeli produk ini
-                  (default aktif)
+                  Wajib login untuk melihat / membeli produk ini (default aktif)
                 </span>
               </label>
             </div>
 
-            {/* KATEGORI / KATALOG */}
+            {/* KATEGORI */}
             <div className="grid gap-1">
               <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                Katalog / kategori – Enter untuk menambah beberapa kategori
+                Katalog / kategori – tekan Enter untuk menambah beberapa kategori
               </label>
               <div className="input flex flex-wrap items-center gap-1 min-h-[42px]">
                 {categories.map((cat) => (
@@ -660,43 +586,6 @@ export default function DasborAdmins() {
                   }
                 />
               </div>
-            </div>
-
-            {/* LABEL PRODUK */}
-            <div className="grid gap-1">
-              <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                Label produk (diskon, populer, dll) – Enter untuk menambah
-              </label>
-              <div className="input flex flex-wrap items-center gap-1 min-h-[42px]">
-                {labels.map((lbl) => (
-                  <span
-                    key={lbl}
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-primary/10 text-[10px] text-primary"
-                  >
-                    {lbl}
-                    <button
-                      type="button"
-                      onClick={() => removeLabel(lbl)}
-                      className="text-[10px]"
-                    >
-                      ✕
-                    </button>
-                  </span>
-                ))}
-                <input
-                  className="flex-1 bg-transparent outline-none border-none text-xs"
-                  value={labelInput}
-                  onChange={(e) => setLabelInput(e.target.value)}
-                  onKeyDown={handleLabelKeyDown}
-                  placeholder={
-                    labels.length === 0 ? "Contoh: populer, rekomendasi" : ""
-                  }
-                />
-              </div>
-              <p className="text-[10px] text-slate-500 dark:text-[var(--text-secondary)]">
-                Catatan: jika diskon &gt; 0, label <b>diskon</b> akan ditambahkan
-                otomatis. Label <b>baru</b> juga otomatis untuk produk baru.
-              </p>
             </div>
 
             {/* FOOTER FORM */}
