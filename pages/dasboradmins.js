@@ -134,18 +134,14 @@ export default function DasborAdmins() {
     setDiscountInput(String(num));
   };
 
-  // === FOTO PRODUK (CHIP DALAM 1 FIELD) ===
-  const addImage = () => {
-    const val = imageInput.trim();
-    if (!val) return;
-    setImages((prev) => [...prev, val]);
-    setImageInput("");
-  };
-
+  // === FOTO PRODUK (CHIP DALAM 1 FIELD, kayak kategori) ===
   const handleImageKeyDown = (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      addImage();
+      const val = imageInput.trim();
+      if (!val) return;
+      setImages((prev) => [...prev, val]);
+      setImageInput("");
     }
   };
 
@@ -171,27 +167,23 @@ export default function DasborAdmins() {
   };
 
   // === FORM TAMBAHAN FIELD (WhatsApp, dll) ===
-  const addExtraField = () => {
-    const label = extraFieldInput.trim();
-    if (!label) return;
-    const id = Date.now().toString() + Math.random().toString(16).slice(2);
-    setExtraFields((prev) => [
-      ...prev,
-      {
-        id,
-        label,
-        type: "text",
-        required: false,
-        requireHttps: false,
-      },
-    ]);
-    setExtraFieldInput("");
-  };
-
   const handleExtraFieldKeyDown = (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      addExtraField();
+      const label = extraFieldInput.trim();
+      if (!label) return;
+      const id = Date.now().toString() + Math.random().toString(16).slice(2);
+      setExtraFields((prev) => [
+        ...prev,
+        {
+          id,
+          label,
+          type: "text",
+          required: false,
+          requireHttps: false,
+        },
+      ]);
+      setExtraFieldInput("");
     }
   };
 
@@ -420,17 +412,16 @@ export default function DasborAdmins() {
               />
             </div>
 
-            {/* Foto produk (1 kolom, chip + tombol +) */}
+            {/* Foto produk (1 kolom, chip horizontal scroll) */}
             <div className="grid gap-1">
               <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                Foto produk (URL) – tekan Enter atau tombol + untuk menambah
-                beberapa foto
+                Foto produk (URL) – tekan Enter untuk menambah beberapa foto
               </label>
-              <div className="input flex flex-wrap items-center gap-1 min-h-[42px]">
+              <div className="input flex items-center gap-2 overflow-x-auto whitespace-nowrap min-h-[42px]">
                 {images.map((url) => (
                   <span
                     key={url}
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-200 dark:bg-slate-700 text-[10px] text-slate-800 dark:text-[var(--text)]"
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-200 dark:bg-slate-700 text-[10px] text-slate-800 dark:text-[var(--text)] flex-shrink-0"
                   >
                     {url.length > 22 ? url.slice(0, 19) + "..." : url}
                     <button
@@ -443,7 +434,7 @@ export default function DasborAdmins() {
                   </span>
                 ))}
                 <input
-                  className="flex-1 bg-transparent outline-none border-none text-xs"
+                  className="bg-transparent outline-none border-none text-xs flex-shrink-0 w-40"
                   value={imageInput}
                   onChange={(e) => setImageInput(e.target.value)}
                   onKeyDown={handleImageKeyDown}
@@ -453,13 +444,6 @@ export default function DasborAdmins() {
                       : ""
                   }
                 />
-                <button
-                  type="button"
-                  onClick={addImage}
-                  className="px-2 py-1 text-[11px] rounded bg-primary text-white"
-                >
-                  +
-                </button>
               </div>
               <p className="text-[10px] text-slate-500 dark:text-[var(--text-secondary)]">
                 Minimal 1 URL foto. Bisa lebih dari 10 URL.
@@ -470,31 +454,24 @@ export default function DasborAdmins() {
             <div className="grid gap-1">
               <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
                 Form tambahan (contoh: WhatsApp, Link Toko, dll) – ketik nama
-                field lalu Enter atau tombol +
+                field lalu Enter
               </label>
-              <div className="input flex flex-wrap items-center gap-1 min-h-[42px] mb-2">
+              <div className="input flex items-center gap-2 min-h-[42px]">
                 <input
-                  className="flex-1 bg-transparent outline-none border-none text-xs"
+                  className="bg-transparent outline-none border-none text-xs w-full"
                   value={extraFieldInput}
                   onChange={(e) => setExtraFieldInput(e.target.value)}
                   onKeyDown={handleExtraFieldKeyDown}
                   placeholder="Contoh: WhatsApp, Instagram, Website"
                 />
-                <button
-                  type="button"
-                  onClick={addExtraField}
-                  className="px-2 py-1 text-[11px] rounded bg-primary text-white"
-                >
-                  +
-                </button>
               </div>
 
               {extraFields.length > 0 && (
-                <div className="grid gap-2">
+                <div className="flex gap-3 overflow-x-auto pb-1 mt-2">
                   {extraFields.map((field) => (
                     <div
                       key={field.id}
-                      className="border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 flex flex-col gap-1 text-[11px] bg-white dark:bg-bg-dark"
+                      className="border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 flex flex-col gap-1 text-[11px] bg-white dark:bg-bg-dark flex-shrink-0 min-w-[220px]"
                     >
                       <div className="flex items-center justify-between gap-2">
                         <span className="font-semibold">{field.label}</span>
@@ -505,11 +482,11 @@ export default function DasborAdmins() {
                           ✕
                         </button>
                       </div>
-                      <div className="flex flex-wrap gap-2 items-center mt-1">
+                      <div className="flex flex-col gap-1 mt-1">
                         <div className="flex items-center gap-1">
                           <span>Tipe input:</span>
                           <select
-                            className="border border-slate-300 dark:border-slate-600 rounded px-1 py-[1px] bg-white dark:bg-card-dark"
+                            className="border border-slate-300 dark:border-slate-600 rounded px-1 py-[1px] bg-white dark:bg-card-dark flex-1"
                             value={field.type}
                             onChange={(e) =>
                               updateExtraField(field.id, {
@@ -576,16 +553,16 @@ export default function DasborAdmins() {
               </label>
             </div>
 
-            {/* KATEGORI */}
+            {/* KATEGORI (chip horizontal scroll) */}
             <div className="grid gap-1">
               <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
                 Katalog / kategori – tekan Enter untuk menambah beberapa kategori
               </label>
-              <div className="input flex flex-wrap items-center gap-1 min-h-[42px]">
+              <div className="input flex items-center gap-2 overflow-x-auto whitespace-nowrap min-h-[42px]">
                 {categories.map((cat) => (
                   <span
                     key={cat}
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-200 dark:bg-slate-700 text-[10px] text-slate-800 dark:text-[var(--text)]"
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-slate-200 dark:bg-slate-700 text-[10px] text-slate-800 dark:text-[var(--text)] flex-shrink-0"
                   >
                     {cat}
                     <button
@@ -598,7 +575,7 @@ export default function DasborAdmins() {
                   </span>
                 ))}
                 <input
-                  className="flex-1 bg-transparent outline-none border-none text-xs"
+                  className="bg-transparent outline-none border-none text-xs flex-shrink-0 w-40"
                   value={categoryInput}
                   onChange={(e) => setCategoryInput(e.target.value)}
                   onKeyDown={handleCategoryKeyDown}
