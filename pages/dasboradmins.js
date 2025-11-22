@@ -28,13 +28,13 @@ export default function DasborAdmins() {
   const [extraForm, setExtraForm] = useState("");
   const [requireLogin, setRequireLogin] = useState(false);
 
-  const [categories, setCategories] = useState<string[]>([]);
+  const [categories, setCategories] = useState([]);
   const [categoryInput, setCategoryInput] = useState("");
 
-  const [mainImages, setMainImages] = useState<string[]>([]);
+  const [mainImages, setMainImages] = useState([]);
   const [mainImageInput, setMainImageInput] = useState("");
 
-  const [extraImages, setExtraImages] = useState<string[]>([]);
+  const [extraImages, setExtraImages] = useState([]);
   const [extraImageInput, setExtraImageInput] = useState("");
 
   const [saving, setSaving] = useState(false);
@@ -100,7 +100,7 @@ export default function DasborAdmins() {
   };
 
   // helper: tambah tag kategori
-  const handleCategoryKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleCategoryKeyDown = (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
       const val = categoryInput.trim();
@@ -112,12 +112,12 @@ export default function DasborAdmins() {
     }
   };
 
-  const removeCategory = (cat: string) => {
+  const removeCategory = (cat) => {
     setCategories((prev) => prev.filter((c) => c !== cat));
   };
 
   // helper: tambah main image
-  const handleMainImageKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleMainImageKeyDown = (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
       const val = mainImageInput.trim();
@@ -127,12 +127,12 @@ export default function DasborAdmins() {
     }
   };
 
-  const removeMainImage = (url: string) => {
+  const removeMainImage = (url) => {
     setMainImages((prev) => prev.filter((u) => u !== url));
   };
 
   // helper: tambah extra image
-  const handleExtraImageKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleExtraImageKeyDown = (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
       const val = extraImageInput.trim();
@@ -142,7 +142,7 @@ export default function DasborAdmins() {
     }
   };
 
-  const removeExtraImage = (url: string) => {
+  const removeExtraImage = (url) => {
     setExtraImages((prev) => prev.filter((u) => u !== url));
   };
 
@@ -162,7 +162,7 @@ export default function DasborAdmins() {
     setExtraImageInput("");
   };
 
-  const handleAddProduct = async (e: React.FormEvent) => {
+  const handleAddProduct = async (e) => {
     e.preventDefault();
     setMessage("");
 
@@ -216,7 +216,7 @@ export default function DasborAdmins() {
             Shop<span className="text-primary">Lite</span> Admin
           </div>
 
-          {/* hanya darkmode icon, tanpa tombol "Menu" */}
+          {/* hanya darkmode icon */}
           <button
             type="button"
             onClick={toggleTheme}
