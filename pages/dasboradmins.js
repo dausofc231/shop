@@ -370,11 +370,10 @@ export default function DasborAdmins() {
                 </label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-[var(--text-secondary)]">
-                    {/* ada spasi di sini */}
-                    {"Rp\u00A0"}
+                    {"Rp\u00A0\u00A0\u00A0"}
                   </span>
                   <input
-                    className="input pl-14"
+                    className="input pl-16"
                     value={priceInput}
                     onChange={handlePriceChange}
                     placeholder="1.000"
@@ -407,10 +406,10 @@ export default function DasborAdmins() {
                 </label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 dark:text-[var(--text-secondary)]">
-                    {"Rp\u00A0"}
+                    {"Rp\u00A0\u00A0\u00A0"}
                   </span>
                   <input
-                    className="input pl-14 bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed"
+                    className="input pl-16 bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 cursor-not-allowed"
                     value={finalPricePreview}
                     disabled
                     readOnly
@@ -439,7 +438,6 @@ export default function DasborAdmins() {
                 Foto Produk (URL) – tekan Enter, atau ketuk di luar input untuk
                 menambah (wajib http:// atau https://)
               </label>
-              {/* kolom input */}
               <div className="input">
                 <input
                   ref={imageInputRef}
@@ -458,7 +456,6 @@ export default function DasborAdmins() {
               {urlError && (
                 <p className="text-[10px] text-red-400 mt-1">{urlError}</p>
               )}
-              {/* chip slider bawah kolom */}
               {images.length > 0 && (
                 <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
                   {images.map((url) => (
