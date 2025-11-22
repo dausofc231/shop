@@ -142,7 +142,6 @@ export default function DasborAdmins() {
     const val = imageInput.trim();
     if (!val) return;
 
-    // wajib http / https
     if (!/^https?:\/\//i.test(val)) {
       setUrlError("URL harus diawali dengan http:// atau https://");
       return;
@@ -193,7 +192,7 @@ export default function DasborAdmins() {
     setCategories((prev) => prev.filter((c) => c !== cat));
   };
 
-  // === FORM TAMBAHAN FIELD (WhatsApp, dll) ===
+  // === FORM TAMBAHAN FIELD ===
   const addExtraField = () => {
     const label = extraFieldInput.trim();
     if (!label) return;
@@ -278,7 +277,6 @@ export default function DasborAdmins() {
     try {
       setSaving(true);
 
-      // label otomatis: diskon + baru
       let finalLabels = [];
       if (discountNumber > 0) finalLabels.push("diskon");
       finalLabels.push("baru");
@@ -398,14 +396,15 @@ export default function DasborAdmins() {
               />
             </div>
 
-            {/* Harga + Diskon satu baris kanan kiri */}
-            <div className="grid grid-cols-2 gap-4">
-              {/* Harga */}
-              <div className="grid gap-1">
-                <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                  Harga (Rp)
-                </label>
-                <div className="flex items-center rounded-xl border border-slate-300 dark:border-slate-600 bg-white/80 dark:bg-bg-dark px-3 py-2 text-xs">
+            {/* Harga + Diskon DALAM SATU BLOK */}
+            <div className="grid gap-1">
+              <div className="flex justify-between text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                <span>Harga (Rp)</span>
+                <span>Diskon</span>
+              </div>
+              <div className="flex items-center gap-3">
+                {/* Harga */}
+                <div className="flex items-center rounded-xl border border-slate-300 dark:border-slate-600 bg-white/80 dark:bg-bg-dark px-3 py-2 text-xs flex-1">
                   <span className="mr-2 text-slate-500 dark:text-[var(--text-secondary)]">
                     Rp
                   </span>
@@ -416,16 +415,11 @@ export default function DasborAdmins() {
                     placeholder="1.000"
                   />
                 </div>
-              </div>
 
-              {/* Diskon (kotak kecil) */}
-              <div className="grid gap-1">
-                <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                  Diskon
-                </label>
-                <div className="inline-flex items-center rounded-xl border border-slate-300 dark:border-slate-600 bg-white/80 dark:bg-bg-dark px-3 py-2 text-xs max-w-[140px]">
+                {/* Diskon kecil */}
+                <div className="flex items-center rounded-xl border border-slate-300 dark:border-slate-600 bg-white/80 dark:bg-bg-dark px-3 py-2 text-xs w-[90px] justify-center">
                   <input
-                    className="bg-transparent outline-none border-none w-10 text-right"
+                    className="bg-transparent outline-none border-none w-8 text-right"
                     value={discountInput}
                     onChange={handleDiscountChange}
                     placeholder="0"
@@ -445,7 +439,7 @@ export default function DasborAdmins() {
               <input
                 className="input"
                 value={stockInput}
-                onChange={handleStockChange}
+                onChange={(e) => setStockInput(e.target.value)}
                 placeholder="25"
               />
             </div>
