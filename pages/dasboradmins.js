@@ -361,16 +361,17 @@ export default function DasborAdmins() {
               />
             </div>
 
-            {/* Harga + Diskon + Hasil */}
-            <div className="grid gap-2">
-              <div className="grid gap-4 sm:grid-cols-3">
+            {/* Harga + Diskon di 1 baris, hasil di bawahnya */}
+            <div className="grid gap-3">
+              {/* Baris atas: Harga & Diskon */}
+              <div className="grid grid-cols-2 gap-4">
                 {/* Harga */}
                 <div className="grid gap-1">
                   <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
                     Harga
                   </label>
                   <div className="flex">
-                    {/* Rp di lapisan sendiri */}
+                    {/* Kotak Rp terpisah */}
                     <div className="flex items-center px-3 text-xs border border-slate-300 dark:border-slate-600 rounded-l-xl rounded-r-none bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-[var(--text-secondary)]">
                       Rp
                     </div>
@@ -400,24 +401,24 @@ export default function DasborAdmins() {
                     </span>
                   </div>
                 </div>
+              </div>
 
-                {/* Harga setelah diskon */}
-                <div className="grid gap-1">
-                  <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
-                    Harga setelah diskon
-                  </label>
-                  <div className="flex">
-                    <div className="flex items-center px-3 text-xs border border-slate-300 dark:border-slate-600 rounded-l-xl rounded-r-none bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-[var(--text-secondary)]">
-                      Rp
-                    </div>
-                    <input
-                      className="input rounded-l-none flex-1 bg-slate-200 dark:bg-slate-800 cursor-not-allowed"
-                      value={finalPricePreview}
-                      disabled
-                      readOnly
-                      placeholder="0"
-                    />
+              {/* Baris bawah: hasil */}
+              <div className="grid gap-1">
+                <label className="text-xs text-slate-700 dark:text-[var(--text-secondary)]">
+                  Harga setelah diskon
+                </label>
+                <div className="flex">
+                  <div className="flex items-center px-3 text-xs border border-slate-300 dark:border-slate-600 rounded-l-xl rounded-r-none bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-[var(--text-secondary)]">
+                    Rp
                   </div>
+                  <input
+                    className="input rounded-l-none flex-1 bg-slate-200 dark:bg-slate-800 cursor-not-allowed"
+                    value={finalPricePreview}
+                    disabled
+                    readOnly
+                    placeholder="0"
+                  />
                 </div>
               </div>
             </div>
