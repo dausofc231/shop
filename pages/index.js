@@ -651,12 +651,10 @@ export default function Home() {
                     : null
                   : null;
 
-                const saving = hasDiscount ? basePrice - finalPrice : 0;
-
                 return (
                   <div
                     key={p.id}
-                    className="card flex flex-col overflow-hidden"
+                    className="card p-2 flex flex-col overflow-hidden"
                   >
                     {/* IMAGE + LABEL ATAS */}
                     <div className="relative w-full aspect-[4/3] bg-slate-200 dark:bg-slate-700 rounded-xl overflow-hidden">
@@ -682,13 +680,8 @@ export default function Home() {
 
                     {/* BAR DISKON PANJANG (DI ANTARA IMAGE & CONTENT) */}
                     {hasDiscount && (
-                      <div className="mt-2 mb-1 px-3 py-1 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/40 text-[11px] font-medium text-red-600 dark:text-red-300 flex items-center justify-between">
-                        <span>Diskon {discountPercent}%</span>
-                        {saving > 0 && (
-                          <span className="text-[10px] opacity-80">
-                            Hemat Rp {saving.toLocaleString("id-ID")}
-                          </span>
-                        )}
+                      <div className="mt-2 mb-1 px-3 py-1 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/40 text-[11px] font-medium text-red-600 dark:text-red-300">
+                        Diskon {discountPercent}%
                       </div>
                     )}
 
@@ -699,13 +692,8 @@ export default function Home() {
                         {p.name}
                       </h3>
 
-                      {/* HARGA: lama | terbaru */}
-                      <div className="flex items-baseline gap-2 text-xs">
-                        {hasDiscount && basePrice > 0 && (
-                          <span className="line-through text-slate-400 dark:text-[var(--text-secondary)]">
-                            Rp {basePrice.toLocaleString("id-ID")}
-                          </span>
-                        )}
+                      {/* HARGA: hanya hasil akhir */}
+                      <div className="text-xs">
                         <span className="font-semibold text-primary">
                           Rp {finalPrice.toLocaleString("id-ID")}
                         </span>
