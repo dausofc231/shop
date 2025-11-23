@@ -381,80 +381,96 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              {/* RATING + LOVE */}
-              <div className="flex items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-[var(--text-secondary)]">
-                <span className="flex items-center gap-1">
-                  Rating:{" "}
-                  <span className="font-semibold">
-                    {formatCount(likeCount)}
-                  </span>{" "}
-                  love
-                </span>
-                <button
-                  type="button"
-                  onClick={handleToggleLike}
-                  className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-bg-dark text-[11px]"
-                >
-                  <FiHeart
-                    className={
-                      liked
-                        ? "text-red-500 fill-red-500 text-xs"
-                        : "text-slate-500 text-xs"
-                    }
-                  />
-                  <span>{liked ? "Suka" : "Suka?"}</span>
-                </button>
-              </div>
+              {/* TITLE + RATING/TERJUAL/STOK + HARGA */}
+              <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
+                <div className="flex items-start justify-between gap-3 flex-wrap">
+                  {/* Title + harga */}
+                  <div className="flex-1 min-w-0">
+                    <h1
+                      className={`text-base sm:text-lg font-semibold text-slate-900 dark:text-[var(--text)] ${
+                        showFullTitle ? "" : "truncate"
+                      } cursor-pointer`}
+                      onClick={() => setShowFullTitle((v) => !v)}
+                      title={product.name}
+                    >
+                      {product.name}
+                    </h1>
 
-              {/* TERJUAL | STOK */}
-              <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-[var(--text-secondary)] -mt-1">
-                <span>
-                  Terjual:{" "}
-                  <span className="font-semibold">{formatCount(sold)}</span>
-                </span>
-                <span>
-                  Stok tersisa:{" "}
-                  <span className="font-semibold">
-                    {formatCount(stock)}
-                  </span>
-                </span>
-              </div>
+                    {/* kalau user minta full title, bikin baris sendiri agar nggak ganggu sebelah */}
+                    {showFullTitle && (
+                      <p className="mt-1 text-[11px] text-slate-500 dark:text-[var(--text-secondary)] whitespace-pre-wrap">
+                        {product.name}
+                      </p>
+                    )}
 
-              {/* TITLE + HARGA */}
-              <div className="space-y-1 pt-1 border-t border-slate-200 dark:border-slate-700">
-                <h1
-                  className={`text-base sm:text-lg font-semibold text-slate-900 dark:text-[var(--text)] ${
-                    showFullTitle ? "" : "line-clamp-2"
-                  } cursor-pointer`}
-                  onClick={() => setShowFullTitle((v) => !v)}
-                  title={product.name}
-                >
-                  {product.name}
-                </h1>
+                    <div className="mt-1 flex flex-wrap items-baseline gap-1.5 text-sm sm:text-base">
+                      {hasDiscount && (
+                        <span className="text-[11px] text-slate-400 line-through">
+                          Rp {basePrice.toLocaleString("id-ID")}
+                        </span>
+                      )}
 
-                <div className="flex flex-wrap items-baseline gap-1.5 text-sm sm:text-base mt-0.5">
-                  {hasDiscount && (
-                    <span className="text-[11px] text-slate-400 line-through">
-                      Rp {basePrice.toLocaleString("id-ID")}
-                    </span>
-                  )}
+                      <span className="font-semibold text-primary">
+                        Rp {finalPrice.toLocaleString("id-ID")}
+                      </span>
 
-                  <span className="font-semibold text-primary">
-                    Rp {finalPrice.toLocaleString("id-ID")}
-                  </span>
+                      {hasDiscount && (
+                        <span className="text-[11px] font-semibold text-red-500">
+                          -{discountPercent}%
+                        </span>
+                      )}
+                    </div>
+                  </div>
 
-                  {hasDiscount && (
-                    <span className="text-[11px] font-semibold text-red-500">
-                      -{discountPercent}%
-                    </span>
-                  )}
+                  {/* Rating + tombol love + terjual/stok */}
+                  <div className="flex flex-col items-end gap-1 text-[11px] text-slate-500 dark:text-[var(--text-secondary)]">
+                    <div className="flex items-center gap-2">
+                      <span className="flex items-center gap-1">
+                        Rating:
+                        <span className="font-semibold">
+                          {formatCount(likeCount)}
+                        </span>
+                        love
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleToggleLike}
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-bg-dark"
+                      >
+                        <FiHeart
+                          className={
+                            liked
+                              ? "text-red-500 fill-red-500 text-xs"
+                              : "text-slate-500 text-xs"
+                          }
+                        />
+                        <span>{liked ? "Suka" : "Suka?"}</span>
+                      </button>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <span>
+                        Terjual:{" "}
+                        <span className="font-semibold">
+                          {formatCount(sold)}
+                        </span>
+                      </span>
+                      <span>|</span>
+                      <span>
+                        Stok:{" "}
+                        <span className="font-semibold">
+                          {formatCount(stock)}
+                        </span>
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
               {/* KATEGORI */}
               {Array.isArray(product.categories) &&
                 product.categories.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
+                  <div className="mt-3 pt-2 border-t border-slate-200 dark:border-slate-700 flex flex-wrap gap-2">
                     {product.categories.map((cat) => (
                       <span
                         key={cat}
@@ -466,27 +482,31 @@ export default function ProductDetailPage() {
                   </div>
                 )}
 
-              {/* DESKRIPSI (collapsible) */}
+              {/* DESKRIPSI (collapsible + scroll) */}
               <div className="mt-3 pt-2 border-t border-slate-200 dark:border-slate-700">
                 <h2 className="text-xs font-semibold mb-1 text-slate-900 dark:text-[var(--text)]">
                   Deskripsi Produk
                 </h2>
                 {product.description ? (
                   <>
-                    <p
-                      className={`text-xs text-slate-700 dark:text-[var(--text-secondary)] leading-relaxed ${
-                        showFullDesc ? "" : "line-clamp-3"
-                      }`}
-                    >
-                      {product.description}
-                    </p>
+                    <div className="rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/40 p-2">
+                      <div
+                        className={`text-xs text-slate-700 dark:text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap ${
+                          showFullDesc ? "max-h-40" : "max-h-16"
+                        } overflow-y-auto`}
+                      >
+                        {product.description}
+                      </div>
+                    </div>
                     {product.description.length > 80 && (
                       <button
                         type="button"
                         onClick={() => setShowFullDesc((v) => !v)}
                         className="mt-1 text-[11px] text-primary hover:underline"
                       >
-                        {showFullDesc ? "Tutup deskripsi" : "Selengkapnya"}
+                        {showFullDesc
+                          ? "Tutup deskripsi"
+                          : "Selengkapnya (scroll)"}
                       </button>
                     )}
                   </>
