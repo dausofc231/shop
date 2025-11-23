@@ -134,7 +134,6 @@ export default function CartPage() {
 
   const handleCheckout = () => {
     if (!currentUser || items.length === 0) return;
-    // TODO: arahkan ke halaman checkout sesuai kebutuhan kamu
     console.log("Checkout dengan item:", items);
   };
 
@@ -227,7 +226,7 @@ export default function CartPage() {
                       key={item.id}
                       className="flex gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 p-2 items-stretch"
                     >
-                      {/* KIRI: IMAGE + LINK (dekat, nggak kejauhan) */}
+                      {/* KIRI: IMAGE + LINK */}
                       <div className="flex flex-col items-center gap-1 w-20">
                         <div className="h-16 w-16 rounded-md overflow-hidden bg-slate-200 dark:bg-slate-700 flex-shrink-0">
                           {item.image ? (
@@ -251,7 +250,8 @@ export default function CartPage() {
 
                       {/* KANAN: NAMA, HARGA, QTY + HAPUS */}
                       <div className="flex-1 flex flex-col justify-between">
-                        <div>
+                        {/* bungkus nama + harga dengan max-width supaya nggak ngedorong card */}
+                        <div className="max-w-[220px] sm:max-w-[280px]">
                           {/* NAMA */}
                           <p
                             className={`text-[12px] font-semibold text-slate-900 dark:text-[var(--text)] cursor-pointer break-words ${
@@ -272,7 +272,7 @@ export default function CartPage() {
                           <p
                             className={`text-[11px] text-primary font-semibold mt-0.5 cursor-pointer ${
                               isPriceExpanded
-                                ? "whitespace-normal break-words"
+                                ? "whitespace-normal break-all"
                                 : "truncate"
                             }`}
                             onClick={() =>
@@ -332,11 +332,11 @@ export default function CartPage() {
 
             {/* RINGKASAN */}
             <section className="card p-3 sm:p-4">
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between mb-2 gap-2">
                 <span className="text-xs text-slate-600 dark:text-[var(--text-secondary)]">
                   Total ({totalItem} item)
                 </span>
-                <span className="text-sm font-semibold text-slate-900 dark:text-[var(--text)] max-w-[90%] break-all">
+                <span className="text-sm font-semibold text-slate-900 dark:text-[var(--text)] max-w-[70%] text-right break-all">
                   {formatRupiah(totalHarga)}
                 </span>
               </div>
