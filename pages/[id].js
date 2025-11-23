@@ -26,6 +26,7 @@ import {
   FiChevronRight,
   FiHeart,
   FiEyeOff,
+  FiShoppingCart,
 } from "react-icons/fi";
 
 // format 1000 -> "1 rb", 1500000 -> "1,5 jt"
@@ -81,6 +82,11 @@ export default function ProductDetailPage() {
   const [savingComment, setSavingComment] = useState(false);
   const [expandedComments, setExpandedComments] = useState({});
 
+  // CART STATE (ikon atas & tombol bawah)
+  const [cartCount, setCartCount] = useState(0); // jumlah item di cart user
+  const [cartAdded, setCartAdded] = useState(false); // apakah produk ini sudah di cart user
+  const [cartBusy, setCartBusy] = useState(false);
+
   /* THEME INIT */
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -100,7 +106,7 @@ export default function ProductDetailPage() {
   const toggleTheme = () =>
     setTheme((prev) => (prev === "dark" ? "light" : "dark"));
 
-  /* AUTH (untuk like & komentar) */
+  /* AUTH (untuk like & komentar & cart) */
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user || null);
@@ -195,6 +201,42 @@ export default function ProductDetailPage() {
     };
     loadComments();
   }, [id]);
+
+  /* LOAD CART COUNT USER (untuk ikon cart atas) */
+  useEffect(() => {
+    const loadCartCount = async () => {
+      if (!currentUser) {
+        setCartCount(0);
+        return;
+      }
+      try {
+        const cartRef = collection(db, "users", currentUser.uid, "cart");
+        const snap = await getDocs(cartRef);
+        setCartCount(snap.size);
+      } catch (err) {
+        console.error("Gagal load cart user:", err);
+      }
+    };
+    loadCartCount();
+  }, [currentUser]);
+
+  /* CEK APAKAH PRODUK INI SUDAH ADA DI CART USER */
+  useEffect(() => {
+    const checkCart = async () => {
+      if (!currentUser || !id) {
+        setCartAdded(false);
+        return;
+      }
+      try {
+        const cartDocRef = doc(db, "users", currentUser.uid, "cart", id);
+        const snap = await getDoc(cartDocRef);
+        setCartAdded(snap.exists());
+      } catch (err) {
+        console.error("Gagal cek cart produk:", err);
+      }
+    };
+    checkCart();
+  }, [currentUser, id]);
 
   /* IMAGE SLIDER HANDLERS */
   const handlePrevImage = () => {
@@ -329,9 +371,48 @@ export default function ProductDetailPage() {
 
   const commentsToShow = showAllComments ? comments : comments.slice(0, 3);
 
+  /* CART HANDLERS */
+  const handleAddToCart = async () => {
+    if (!product || !id) return;
+    if (!currentUser) return; // wajib login
+    if (stock <= 0) return;
+    if (cartBusy || cartAdded) return; // hanya sekali per akun
+
+    setCartBusy(true);
+
+    try {
+      const cartDocRef = doc(db, "users", currentUser.uid, "cart", id);
+      await setDoc(cartDocRef, {
+        productId: id,
+        name: product.name || "",
+        price: finalPrice,
+        image: images[0] || "",
+        createdAt: serverTimestamp(),
+      });
+
+      setCartAdded(true);
+      setCartCount((c) => c + 1); // update angka cart atas
+    } catch (err) {
+      console.error("Gagal tambah ke keranjang:", err);
+    } finally {
+      setCartBusy(false);
+    }
+  };
+
+  const handleBuyNow = () => {
+    if (!product || !id) return;
+    if (!currentUser) return; // kalau mau bisa arahkan ke login dulu
+    if (stock <= 0) return;
+
+    // TODO: arahkan ke halaman checkout sesuai kebutuhan kamu
+    // contoh:
+    // router.push(`/checkout?productId=${id}`);
+    console.log("Beli sekarang:", id);
+  };
+
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-bg-dark text-slate-900 dark:text-[var(--text)] text-sm">
-      {/* NAVBAR */}
+      {/* NAVBAR ATAS */}
       <header className="w-full border-b border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-bg-dark/80 backdrop-blur sticky top-0 z-20">
         <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -351,22 +432,49 @@ export default function ProductDetailPage() {
             </Link>
           </div>
 
-          <button
-            onClick={toggleTheme}
-            className="h-8 w-8 flex items-center justify-center rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-card-dark"
-            aria-label="Dark / light mode"
-          >
-            {theme === "dark" ? (
-              <FiSun className="text-primary" />
-            ) : (
-              <FiMoon className="text-slate-700" />
-            )}
-          </button>
+          <div className="flex items-center gap-2">
+            {/* CART ICON ATAS */}
+            <button
+              type="button"
+              onClick={
+                currentUser ? () => router.push("/cart") : undefined
+              }
+              disabled={!currentUser}
+              className={`relative h-8 w-8 flex items-center justify-center rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-card-dark ${
+                !currentUser ? "opacity-60 cursor-not-allowed" : ""
+              }`}
+              aria-label="Lihat keranjang"
+            >
+              <FiShoppingCart className="text-slate-700 dark:text-[var(--text)]" />
+              {cartCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-0.5 rounded-full bg-primary text-[10px] text-white flex items-center justify-center">
+                  {cartCount > 99 ? "99+" : cartCount}
+                </span>
+              )}
+              {!currentUser && (
+                <span className="absolute w-[1px] h-5 bg-slate-500 rotate-45" />
+              )}
+            </button>
+
+            {/* THEME TOGGLE */}
+            <button
+              onClick={toggleTheme}
+              className="h-8 w-8 flex items-center justify-center rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-card-dark"
+              aria-label="Dark / light mode"
+            >
+              {theme === "dark" ? (
+                <FiSun className="text-primary" />
+              ) : (
+                <FiMoon className="text-slate-700" />
+              )}
+            </button>
+          </div>
         </div>
       </header>
 
       {/* MAIN */}
-      <main className="max-w-5xl mx-auto px-4 py-6">
+      <main className="max-w-5xl mx-auto px-4 py-6 pb-20">
+        {/* pb-20 supaya konten tidak ketutupan navbar bawah */}
         {loading ? (
           <p className="text-xs text-slate-500 dark:text-[var(--text-secondary)]">
             Memuat detail produk...
@@ -730,6 +838,44 @@ export default function ProductDetailPage() {
           </div>
         )}
       </main>
+
+      {/* NAVBAR BAWAH: Add to Cart + Buy Now */}
+      {!loading && !notFound && product && (
+        <div className="sticky bottom-0 inset-x-0 border-t border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-bg-dark/90 backdrop-blur z-20">
+          <div className="max-w-5xl mx-auto px-4 py-2 flex items-center gap-2">
+            {/* Tombol Add to Cart (bawah) */}
+            <button
+              type="button"
+              onClick={handleAddToCart}
+              disabled={
+                !currentUser || stock <= 0 || cartBusy || cartAdded
+              }
+              className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-card-dark text-[11px] font-medium text-slate-800 dark:text-[var(--text)] py-2 disabled:opacity-60"
+            >
+              <FiShoppingCart className="text-xs" />
+              <span>
+                {!currentUser
+                  ? "Login untuk menambah"
+                  : cartAdded
+                  ? "Sudah di keranjang"
+                  : stock > 0
+                  ? "Tambah ke Keranjang"
+                  : "Stok Habis"}
+              </span>
+            </button>
+
+            {/* Tombol Buy Now */}
+            <button
+              type="button"
+              onClick={handleBuyNow}
+              disabled={!currentUser || stock <= 0}
+              className="flex-1 inline-flex items-center justify-center rounded-lg bg-primary text-white text-[11px] font-semibold py-2 disabled:opacity-60"
+            >
+              {stock > 0 ? "Beli Sekarang" : "Stok Habis"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
