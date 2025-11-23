@@ -444,7 +444,7 @@ export default function ProductDetailPage() {
                   )}
                 </div>
 
-                {/* TERJUAL | STOK (lebih dekat + ada :) */}
+                {/* TERJUAL | STOK */}
                 <div className="flex gap-1.5 text-[11px] px-0.5 mt-1">
                   <div className="flex-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-0.5 flex items-center justify-between">
                     <span className="text-slate-500 dark:text-[var(--text-secondary)]">
@@ -489,7 +489,7 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              {/* TITLE + HARGA (lebih rapat) */}
+              {/* TITLE + HARGA */}
               <div className="pt-1.5 border-t border-slate-200 dark:border-slate-700 space-y-1 px-0.5">
                 <h1
                   className={`text-base sm:text-lg font-semibold text-slate-900 dark:text-[var(--text)] break-words ${
@@ -501,24 +501,24 @@ export default function ProductDetailPage() {
                   {product.name}
                 </h1>
 
-                <div className="border-t border-slate-200 dark:border-slate-700 mt-0.5 mb-0.5" />
+                {/* garis pemisah judul ↔ harga, lebih rapat */}
+                <div className="border-t border-slate-200 dark:border-slate-700 my-1" />
 
-                <div className="flex flex-col gap-0.25">
-                  <div className="flex items-baseline gap-1">
-                    <span className="font-semibold text-primary text-[13px]">
-                      Rp {finalPrice.toLocaleString("id-ID")}
-                    </span>
-                    {hasDiscount && (
+                {/* HARGA: baru, diskon, lama jadi satu baris (wrap kalau kecil) */}
+                <div className="flex flex-wrap items-baseline gap-x-1 gap-y-0.5">
+                  <span className="font-semibold text-primary text-[13px]">
+                    Rp {finalPrice.toLocaleString("id-ID")}
+                  </span>
+
+                  {hasDiscount && (
+                    <>
                       <span className="text-[10px] font-semibold text-red-500">
                         -{discountPercent}%
                       </span>
-                    )}
-                  </div>
-
-                  {hasDiscount && (
-                    <span className="text-[10px] text-slate-400 line-through">
-                      Rp {basePrice.toLocaleString("id-ID")}
-                    </span>
+                      <span className="text-[10px] text-slate-400 line-through">
+                        Rp {basePrice.toLocaleString("id-ID")}
+                      </span>
+                    </>
                   )}
                 </div>
               </div>
