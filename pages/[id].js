@@ -25,6 +25,7 @@ import {
   FiChevronLeft,
   FiChevronRight,
   FiHeart,
+  FiEyeOff,
 } from "react-icons/fi";
 
 // format 1000 -> "1 rb", 1500000 -> "1,5 jt"
@@ -197,12 +198,11 @@ export default function ProductDetailPage() {
     setTouchStartX(null);
   };
 
-  /* LIKE HANDLER – 1 akun = 1 like */
+  /* LIKE HANDLER – 1 akun = 1 like, wajib login */
   const handleToggleLike = async () => {
     if (!product || !id) return;
-
     if (!currentUser) {
-      alert("Kamu harus login dulu untuk memberi ♥ pada produk ini.");
+      // kalau belum login, tombol di UI sudah dinonaktifkan; di sini cukup diam.
       return;
     }
     if (likeBusy) return;
@@ -212,13 +212,11 @@ export default function ProductDetailPage() {
     const productRef = doc(db, "products", id);
     const likeRef = doc(db, "products", id, "likes", currentUser.uid);
 
-    // Optimistic UI
     const prevLiked = liked;
     const prevCount = likeCount;
 
     try {
       if (!liked) {
-        // tambah like
         setLiked(true);
         setLikeCount((c) => c + 1);
 
@@ -232,7 +230,6 @@ export default function ProductDetailPage() {
           }),
         ]);
       } else {
-        // hapus like
         setLiked(false);
         setLikeCount((c) => Math.max(c - 1, 0));
 
@@ -245,7 +242,6 @@ export default function ProductDetailPage() {
       }
     } catch (err) {
       console.error("Gagal update like:", err);
-      alert("Gagal mengubah like. Cek koneksi / izin akses kamu.");
       // rollback
       setLiked(prevLiked);
       setLikeCount(prevCount);
@@ -254,10 +250,10 @@ export default function ProductDetailPage() {
     }
   };
 
-  /* KOMENTAR HANDLER – SIMPAN KE FIRESTORE */
+  /* KOMENTAR HANDLER – SIMPAN KE FIRESTORE (wajib login di UI) */
   const handleSubmitComment = async (e) => {
     e.preventDefault();
-    if (!id) return;
+    if (!id || !currentUser) return;
 
     const name = commentName.trim() || "Anonim";
     const text = commentText.trim();
@@ -270,7 +266,7 @@ export default function ProductDetailPage() {
         name,
         text,
         createdAt: serverTimestamp(),
-        userUid: currentUser?.uid || null,
+        userUid: currentUser.uid,
       };
       const newDoc = await addDoc(commentsRef, payload);
 
@@ -284,7 +280,7 @@ export default function ProductDetailPage() {
       ]);
       setCommentText("");
     } catch (err) {
-      console.error("Gagal kirim komentar:", err);
+      console.error("Gagal mengirim komentar:", err);
       alert("Gagal mengirim komentar. Cek koneksi / aturan akses (login) kamu.");
     } finally {
       setSavingComment(false);
@@ -374,18 +370,32 @@ export default function ProductDetailPage() {
             <section className="card flex flex-col gap-3">
               {/* IMAGE + VARIASI */}
               <div className="flex flex-col gap-2">
-                {/* IMAGE BESAR */}
+                {/* IMAGE BESAR (slider geser) */}
                 <div
                   className="relative w-full aspect-[4/3] bg-slate-200 dark:bg-slate-700 rounded-xl overflow-hidden"
                   onTouchStart={handleTouchStartImg}
                   onTouchEnd={handleTouchEndImg}
                 >
                   {images.length > 0 ? (
-                    <img
-                      src={images[activeIndex]}
-                      alt={product.name || "Product image"}
-                      className="w-full h-full object-cover"
-                    />
+                    <div
+                      className="absolute inset-0 flex transition-transform duration-300 ease-out"
+                      style={{
+                        transform: `translateX(-${activeIndex * 100}%)`,
+                      }}
+                    >
+                      {images.map((img, idx) => (
+                        <div
+                          key={img + idx}
+                          className="w-full h-full flex-shrink-0"
+                        >
+                          <img
+                            src={img}
+                            alt={product.name || "Product image"}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ))}
+                    </div>
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-xs text-slate-500 dark:text-[var(--text-secondary)]">
                       Tidak ada gambar
@@ -461,34 +471,54 @@ export default function ProductDetailPage() {
                   {product.name}
                 </h1>
 
-                <div className="flex flex-wrap items-baseline gap-1.5 text-sm sm:text-base mt-0.5">
-                  {hasDiscount && (
-                    <span className="text-[11px] text-slate-400 line-through">
-                      Rp {basePrice.toLocaleString("id-ID")}
-                    </span>
-                  )}
-
-                  <span className="font-semibold text-primary">
+                <div className="flex flex-col items-start gap-0.5 mt-0.5">
+                  <span className="font-semibold text-primary text-sm sm:text-base">
                     Rp {finalPrice.toLocaleString("id-ID")}
                   </span>
 
                   {hasDiscount && (
-                    <span className="text-[11px] font-semibold text-red-500">
-                      -{discountPercent}%
-                    </span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-[11px] text-slate-400 line-through">
+                        Rp {basePrice.toLocaleString("id-ID")}
+                      </span>
+                      <span className="text-[11px] font-semibold text-red-500">
+                        -{discountPercent}%
+                      </span>
+                    </div>
                   )}
                 </div>
               </div>
 
-              {/* KATEGORI */}
+              {/* DESKRIPSI (collapsible + scroll) */}
+              <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-700">
+                <h2 className="text-xs font-semibold mb-1 text-slate-900 dark:text-[var(--text)]">
+                  Deskripsi Produk
+                </h2>
+                {product.description ? (
+                  <div
+                    className={`rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 px-2.5 py-2 cursor-pointer overflow-y-auto ${
+                      showFullDesc ? "max-h-52" : "max-h-24"
+                    }`}
+                    onClick={() => setShowFullDesc((v) => !v)}
+                  >
+                    <p className="text-xs text-slate-700 dark:text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap break-words">
+                      {product.description}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-500 dark:text-[var(--text-secondary)]">
+                    Belum ada deskripsi yang ditambahkan.
+                  </p>
+                )}
+              </div>
+
+              {/* KATEGORI (slider horizontal 1 baris) */}
               {Array.isArray(product.categories) &&
                 product.categories.length > 0 && (
-                  <div className="mt-2 pt-1 border-t border-slate-200 dark:border-slate-700">
-                    <div className="flex items-center justify-between mb-1">
-                      <h2 className="text-xs font-semibold text-slate-900 dark:text-[var(--text)]">
-                        Kategori
-                      </h2>
-                    </div>
+                  <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-700">
+                    <h2 className="text-xs font-semibold mb-1 text-slate-900 dark:text-[var(--text)]">
+                      Kategori
+                    </h2>
                     <div className="flex gap-1.5 overflow-x-auto pb-1">
                       {product.categories.map((cat) => (
                         <span
@@ -501,29 +531,6 @@ export default function ProductDetailPage() {
                     </div>
                   </div>
                 )}
-
-              {/* DESKRIPSI (collapsible, klik area) */}
-              <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-700">
-                <h2 className="text-xs font-semibold mb-1 text-slate-900 dark:text-[var(--text)]">
-                  Deskripsi Produk
-                </h2>
-                {product.description ? (
-                  <div
-                    className={`rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 px-3 py-2 cursor-pointer max-h-40 overflow-y-auto ${
-                      showFullDesc ? "" : "line-clamp-3"
-                    }`}
-                    onClick={() => setShowFullDesc((v) => !v)}
-                  >
-                    <p className="text-xs text-slate-700 dark:text-[var(--text-secondary)] leading-relaxed">
-                      {product.description}
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-xs text-slate-500 dark:text-[var(--text-secondary)]">
-                    Belum ada deskripsi yang ditambahkan.
-                  </p>
-                )}
-              </div>
             </section>
 
             {/* CARD RATING & KOMENTAR */}
@@ -535,9 +542,11 @@ export default function ProductDetailPage() {
                 <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-[var(--text-secondary)]">
                   <button
                     type="button"
-                    onClick={handleToggleLike}
-                    disabled={likeBusy}
-                    className="h-7 w-7 flex items-center justify-center rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-bg-dark"
+                    onClick={currentUser ? handleToggleLike : undefined}
+                    disabled={!currentUser || likeBusy}
+                    className={`relative h-7 w-7 flex items-center justify-center rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-bg-dark ${
+                      !currentUser ? "opacity-60 cursor-not-allowed" : ""
+                    }`}
                     aria-label="Berikan like"
                   >
                     <FiHeart
@@ -547,6 +556,9 @@ export default function ProductDetailPage() {
                           : "text-slate-500 text-sm"
                       }
                     />
+                    {!currentUser && (
+                      <span className="absolute w-[1px] h-5 bg-slate-500 rotate-45" />
+                    )}
                   </button>
                   <span>
                     {formatCount(likeCount)} ♥ | {comments.length} komentar
@@ -554,40 +566,57 @@ export default function ProductDetailPage() {
                 </div>
               </div>
 
-              {/* FORM KOMENTAR */}
-              <form onSubmit={handleSubmitComment} className="grid gap-2 mb-4">
-                <div className="grid gap-1">
-                  <label className="text-[11px] text-slate-700 dark:text-[var(--text-secondary)]">
-                    Nama
-                  </label>
-                  <input
-                    className="input text-[11px]"
-                    placeholder="Nama kamu (boleh kosong, jadi Anonim)"
-                    value={commentName}
-                    onChange={(e) => setCommentName(e.target.value)}
-                  />
+              {/* INFO JIKA BELUM LOGIN */}
+              {!currentUser && (
+                <div className="mb-4 flex items-start gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2">
+                  <FiEyeOff className="mt-0.5 text-slate-500 dark:text-[var(--text-secondary)] text-sm" />
+                  <p className="text-[11px] text-slate-600 dark:text-[var(--text-secondary)] leading-snug">
+                    Login terlebih dahulu untuk memberi ♥ dan menulis komentar.
+                    Ulasan dari pengguna lain tetap bisa kamu lihat di bawah ini.
+                  </p>
                 </div>
+              )}
 
-                <div className="grid gap-1">
-                  <label className="text-[11px] text-slate-700 dark:text-[var(--text-secondary)]">
-                    Komentar
-                  </label>
-                  <textarea
-                    className="input text-[11px] min-h-[70px]"
-                    placeholder="Tulis komentar kamu di sini..."
-                    value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
-                  />
-                </div>
+              {/* FORM KOMENTAR (HANYA JIKA LOGIN) */}
+              {currentUser && (
+                <form onSubmit={handleSubmitComment} className="grid gap-2 mb-4">
+                  <div className="grid gap-1">
+                    <label className="text-[11px] text-slate-700 dark:text-[var(--text-secondary)]">
+                      Nama
+                    </label>
+                    <input
+                      className="input text-[11px]"
+                      placeholder="Nama kamu (boleh kosong, jadi Anonim)"
+                      value={commentName}
+                      onChange={(e) => setCommentName(e.target.value)}
+                    />
+                  </div>
 
-                <button
-                  type="submit"
-                  disabled={savingComment}
-                  className="mt-1 inline-flex items-center justify-center px-3 py-1.5 rounded-lg bg-primary text-white text-[11px] font-medium disabled:opacity-60"
-                >
-                  {savingComment ? "Mengirim..." : "Kirim"}
-                </button>
-              </form>
+                  <div className="grid gap-1">
+                    <label className="text-[11px] text-slate-700 dark:text-[var(--text-secondary)]">
+                      Komentar
+                    </label>
+                    <textarea
+                      className="input text-[11px] min-h-[70px]"
+                      placeholder="Tulis komentar kamu di sini..."
+                      value={commentText}
+                      onChange={(e) => setCommentText(e.target.value)}
+                      maxLength={500}
+                    />
+                    <p className="text-[10px] text-slate-400 dark:text-[var(--text-secondary)] text-right">
+                      {commentText.length}/500
+                    </p>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={savingComment}
+                    className="mt-1 inline-flex items-center justify-center px-3 py-1.5 rounded-lg bg-primary text-white text-[11px] font-medium disabled:opacity-60"
+                  >
+                    {savingComment ? "Mengirim..." : "Kirim"}
+                  </button>
+                </form>
+              )}
 
               {/* LIST KOMENTAR */}
               <div className="border border-slate-200 dark:border-slate-600 rounded-lg p-3 bg-slate-50/60 dark:bg-slate-800/40">
@@ -617,8 +646,8 @@ export default function ProductDetailPage() {
                             key={c.id}
                             className="rounded-md bg-white/70 dark:bg-slate-900/60 px-2 py-1.5 border border-slate-200 dark:border-slate-700"
                           >
-                            <div className="flex items-center justify-between gap-2 mb-0.5">
-                              <p className="text-[11px] font-semibold text-slate-800 dark:text-[var(--text)]">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="text-[11px] font-semibold text-slate-800 dark:text-[var(--text)] max-w-[60%] truncate">
                                 {c.name || "Anonim"}
                               </p>
                               {tanggal && (
@@ -627,9 +656,11 @@ export default function ProductDetailPage() {
                                 </span>
                               )}
                             </div>
-                            <p className="text-[11px] text-slate-600 dark:text-[var(--text-secondary)] leading-snug">
-                              {c.text}
-                            </p>
+                            <div className="border-t border-slate-200 dark:border-slate-700 mt-1 pt-1">
+                              <p className="text-[11px] text-slate-600 dark:text-[var(--text-secondary)] leading-snug whitespace-pre-wrap break-words">
+                                {c.text}
+                              </p>
+                            </div>
                           </div>
                         );
                       })}
