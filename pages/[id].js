@@ -65,6 +65,7 @@ export default function ProductDetailPage() {
   // like / rating
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
+  const [likeBusy, setLikeBusy] = useState(false);
 
   // title + deskripsi expand
   const [showFullTitle, setShowFullTitle] = useState(false);
@@ -96,10 +97,10 @@ export default function ProductDetailPage() {
   const toggleTheme = () =>
     setTheme((prev) => (prev === "dark" ? "light" : "dark"));
 
-  /* AUTH (untuk 1 akun 1 like + uid komentar) */
+  /* AUTH (untuk like & komentar) */
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
+      setCurrentUser(user || null);
     });
     return () => unsub();
   }, []);
@@ -132,23 +133,21 @@ export default function ProductDetailPage() {
     loadProduct();
   }, [id]);
 
-  /* CEK APAKAH USER SUDAH LIKE (1 akun 1 ♥) */
+  /* CEK APAKAH USER SUDAH LIKE (SUBKOLEKSI likes) */
   useEffect(() => {
-    if (!id || !currentUser) {
-      setLiked(false);
-      return;
-    }
-
     const checkLiked = async () => {
+      if (!id || !currentUser) {
+        setLiked(false);
+        return;
+      }
       try {
         const likeRef = doc(db, "products", id, "likes", currentUser.uid);
         const snap = await getDoc(likeRef);
         setLiked(snap.exists());
       } catch (err) {
-        console.error("Gagal cek like user:", err);
+        console.error("Gagal cek like:", err);
       }
     };
-
     checkLiked();
   }, [id, currentUser]);
 
@@ -184,11 +183,11 @@ export default function ProductDetailPage() {
     );
   };
 
-  const handleTouchStartImage = (e) => {
+  const handleTouchStartImg = (e) => {
     setTouchStartX(e.touches[0].clientX);
   };
 
-  const handleTouchEndImage = (e) => {
+  const handleTouchEndImg = (e) => {
     if (touchStartX === null) return;
     const diff = e.changedTouches[0].clientX - touchStartX;
     if (Math.abs(diff) > 40) {
@@ -198,65 +197,67 @@ export default function ProductDetailPage() {
     setTouchStartX(null);
   };
 
-  /* LIKE HANDLER – wajib login, 1 akun 1 ♥ */
+  /* LIKE HANDLER – 1 akun = 1 like */
   const handleToggleLike = async () => {
-    if (!product) return;
+    if (!product || !id) return;
 
     if (!currentUser) {
-      alert("Silakan login dulu untuk memberi ♥ pada produk ini.");
+      alert("Kamu harus login dulu untuk memberi ♥ pada produk ini.");
       return;
     }
+    if (likeBusy) return;
 
+    setLikeBusy(true);
+
+    const productRef = doc(db, "products", id);
+    const likeRef = doc(db, "products", id, "likes", currentUser.uid);
+
+    // Optimistic UI
     const prevLiked = liked;
     const prevCount = likeCount;
 
-    const newLiked = !prevLiked;
-    const productRef = doc(db, "products", product.id);
-    const likeRef = doc(
-      db,
-      "products",
-      product.id,
-      "likes",
-      currentUser.uid
-    );
-
-    // Optimistic UI
-    let newCount = prevCount;
-    if (newLiked) newCount = prevCount + 1;
-    else newCount = Math.max(prevCount - 1, 0);
-
-    setLiked(newLiked);
-    setLikeCount(newCount);
-    setProduct((prev) => (prev ? { ...prev, likes: newCount } : prev));
-
     try {
-      if (newLiked) {
-        await setDoc(likeRef, {
-          userUid: currentUser.uid,
-          createdAt: serverTimestamp(),
-        });
-        await updateDoc(productRef, { likes: increment(1) });
+      if (!liked) {
+        // tambah like
+        setLiked(true);
+        setLikeCount((c) => c + 1);
+
+        await Promise.all([
+          setDoc(likeRef, {
+            userUid: currentUser.uid,
+            createdAt: serverTimestamp(),
+          }),
+          updateDoc(productRef, {
+            likes: increment(1),
+          }),
+        ]);
       } else {
-        await deleteDoc(likeRef);
-        await updateDoc(productRef, { likes: increment(-1) });
+        // hapus like
+        setLiked(false);
+        setLikeCount((c) => Math.max(c - 1, 0));
+
+        await Promise.all([
+          deleteDoc(likeRef),
+          updateDoc(productRef, {
+            likes: increment(-1),
+          }),
+        ]);
       }
     } catch (err) {
-      console.error("Gagal update likes:", err);
+      console.error("Gagal update like:", err);
+      alert("Gagal mengubah like. Cek koneksi / izin akses kamu.");
       // rollback
       setLiked(prevLiked);
       setLikeCount(prevCount);
-      setProduct((prev) => (prev ? { ...prev, likes: prevCount } : prev));
-      alert("Gagal mengupdate like. Coba lagi beberapa saat lagi.");
+    } finally {
+      setLikeBusy(false);
     }
   };
 
   /* KOMENTAR HANDLER – SIMPAN KE FIRESTORE */
   const handleSubmitComment = async (e) => {
     e.preventDefault();
-    if (!id) {
-      alert("Produk belum siap. Muat ulang halaman dan coba lagi.");
-      return;
-    }
+    if (!id) return;
 
     const name = commentName.trim() || "Anonim";
     const text = commentText.trim();
@@ -273,7 +274,6 @@ export default function ProductDetailPage() {
       };
       const newDoc = await addDoc(commentsRef, payload);
 
-      // Tambah ke state biar langsung kelihatan
       setComments((prev) => [
         {
           id: newDoc.id,
@@ -377,8 +377,8 @@ export default function ProductDetailPage() {
                 {/* IMAGE BESAR */}
                 <div
                   className="relative w-full aspect-[4/3] bg-slate-200 dark:bg-slate-700 rounded-xl overflow-hidden"
-                  onTouchStart={handleTouchStartImage}
-                  onTouchEnd={handleTouchEndImage}
+                  onTouchStart={handleTouchStartImg}
+                  onTouchEnd={handleTouchEndImg}
                 >
                   {images.length > 0 ? (
                     <img
@@ -412,7 +412,19 @@ export default function ProductDetailPage() {
                   )}
                 </div>
 
-                {/* THUMBNAILS SLIDER */}
+                {/* TERJUAL | STOK */}
+                <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-[var(--text-secondary)] px-0.5">
+                  <span>
+                    Terjual:{" "}
+                    <span className="font-semibold">{formatCount(sold)}</span>
+                  </span>
+                  <span>
+                    Stok:{" "}
+                    <span className="font-semibold">{formatCount(stock)}</span>
+                  </span>
+                </div>
+
+                {/* THUMBNAILS */}
                 {images.length > 1 && (
                   <div className="flex gap-2 overflow-x-auto pb-1">
                     {images.map((img, idx) => (
@@ -435,97 +447,53 @@ export default function ProductDetailPage() {
                     ))}
                   </div>
                 )}
+              </div>
 
-                {/* TERJUAL | STOK – kecil di bawah image, sebelum garis pembatas */}
-                <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-[var(--text-secondary)]">
-                  <span>
-                    Terjual:{" "}
-                    <span className="font-semibold">
-                      {formatCount(sold)}
+              {/* TITLE + HARGA */}
+              <div className="pt-2 border-t border-slate-200 dark:border-slate-700 space-y-1">
+                <h1
+                  className={`text-base sm:text-lg font-semibold text-slate-900 dark:text-[var(--text)] break-words ${
+                    showFullTitle ? "" : "line-clamp-2"
+                  } cursor-pointer`}
+                  onClick={() => setShowFullTitle((v) => !v)}
+                  title={product.name}
+                >
+                  {product.name}
+                </h1>
+
+                <div className="flex flex-wrap items-baseline gap-1.5 text-sm sm:text-base mt-0.5">
+                  {hasDiscount && (
+                    <span className="text-[11px] text-slate-400 line-through">
+                      Rp {basePrice.toLocaleString("id-ID")}
                     </span>
+                  )}
+
+                  <span className="font-semibold text-primary">
+                    Rp {finalPrice.toLocaleString("id-ID")}
                   </span>
-                  <span>
-                    Stok:{" "}
-                    <span className="font-semibold">
-                      {formatCount(stock)}
+
+                  {hasDiscount && (
+                    <span className="text-[11px] font-semibold text-red-500">
+                      -{discountPercent}%
                     </span>
-                  </span>
+                  )}
                 </div>
               </div>
 
-              {/* TITLE + HARGA + ♥ DI POJOK KANAN */}
-              <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
-                <div className="flex items-start justify-between gap-2">
-                  {/* Title + harga */}
-                  <div className="flex-1 min-w-0">
-                    <h1
-                      className={`text-base sm:text-lg font-semibold text-slate-900 dark:text-[var(--text)] break-words ${
-                        showFullTitle ? "line-clamp-none" : "line-clamp-2"
-                      } cursor-pointer`}
-                      onClick={() => setShowFullTitle((v) => !v)}
-                      title={product.name}
-                    >
-                      {product.name}
-                    </h1>
-
-                    {/* kalau mau lihat full title, tampilkan blok kecil di bawahnya */}
-                    {showFullTitle && (
-                      <div className="mt-1 max-h-16 overflow-y-auto pr-1 rounded-md bg-slate-50 dark:bg-slate-800/70 p-1">
-                        <p className="text-[11px] text-slate-600 dark:text-[var(--text-secondary)] whitespace-pre-wrap break-words">
-                          {product.name}
-                        </p>
-                      </div>
-                    )}
-
-                    <div className="mt-1 flex items-baseline gap-1.5 text-sm sm:text-base flex-wrap">
-                      {hasDiscount && (
-                        <>
-                          <span className="text-[11px] text-slate-400 line-through">
-                            Rp {basePrice.toLocaleString("id-ID")}
-                          </span>
-                          <span className="text-[11px] text-slate-400">|</span>
-                        </>
-                      )}
-
-                      <span className="font-semibold text-primary">
-                        Rp {finalPrice.toLocaleString("id-ID")}
-                      </span>
-
-                      {hasDiscount && (
-                        <span className="text-[11px] font-semibold text-red-500">
-                          -{discountPercent}%
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Hanya ♥ di pojok kanan, tanpa tulisan rating */}
-                  <button
-                    type="button"
-                    onClick={handleToggleLike}
-                    className="mt-0.5 h-7 w-7 flex items-center justify-center rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-bg-dark"
-                    aria-label="Suka"
-                  >
-                    <FiHeart
-                      className={
-                        liked
-                          ? "text-red-500 fill-red-500 text-sm"
-                          : "text-slate-500 text-sm"
-                      }
-                    />
-                  </button>
-                </div>
-              </div>
-
-              {/* KATEGORI – slider horizontal, lebih rapat */}
+              {/* KATEGORI */}
               {Array.isArray(product.categories) &&
                 product.categories.length > 0 && (
-                  <div className="mt-2">
+                  <div className="mt-2 pt-1 border-t border-slate-200 dark:border-slate-700">
+                    <div className="flex items-center justify-between mb-1">
+                      <h2 className="text-xs font-semibold text-slate-900 dark:text-[var(--text)]">
+                        Kategori
+                      </h2>
+                    </div>
                     <div className="flex gap-1.5 overflow-x-auto pb-1">
                       {product.categories.map((cat) => (
                         <span
                           key={cat}
-                          className="px-2 py-[3px] rounded-full bg-slate-100 dark:bg-slate-700 text-[10px] text-slate-700 dark:text-[var(--text)] border border-slate-200 dark:border-slate-600 flex-shrink-0"
+                          className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-[10px] text-slate-700 dark:text-[var(--text)] border border-slate-200 dark:border-slate-600 flex-shrink-0"
                         >
                           {cat}
                         </span>
@@ -534,23 +502,21 @@ export default function ProductDetailPage() {
                   </div>
                 )}
 
-              {/* DESKRIPSI – klik card, tinggi dibatasi (slide) */}
-              <div className="mt-3 pt-2 border-t border-slate-200 dark:border-slate-700">
+              {/* DESKRIPSI (collapsible, klik area) */}
+              <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-700">
                 <h2 className="text-xs font-semibold mb-1 text-slate-900 dark:text-[var(--text)]">
                   Deskripsi Produk
                 </h2>
                 {product.description ? (
                   <div
+                    className={`rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 px-3 py-2 cursor-pointer max-h-40 overflow-y-auto ${
+                      showFullDesc ? "" : "line-clamp-3"
+                    }`}
                     onClick={() => setShowFullDesc((v) => !v)}
-                    className="rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/40 p-2 cursor-pointer"
                   >
-                    <div
-                      className={`text-xs text-slate-700 dark:text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap break-words ${
-                        showFullDesc ? "max-h-40" : "max-h-16"
-                      } overflow-y-auto`}
-                    >
+                    <p className="text-xs text-slate-700 dark:text-[var(--text-secondary)] leading-relaxed">
                       {product.description}
-                    </div>
+                    </p>
                   </div>
                 ) : (
                   <p className="text-xs text-slate-500 dark:text-[var(--text-secondary)]">
@@ -564,18 +530,28 @@ export default function ProductDetailPage() {
             <section className="card">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-sm font-semibold text-slate-900 dark:text-[var(--text)]">
-                  Ulasan & Komentar
+                  Ulasan & Rating
                 </h2>
-                <span className="text-[11px] text-slate-500 dark:text-[var(--text-secondary)]">
-                  Rating:{" "}
-                  <span className="font-semibold">
-                    {formatCount(likeCount)}
-                  </span>{" "}
-                  | Komentar:{" "}
-                  <span className="font-semibold">
-                    {comments.length}
+                <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-[var(--text-secondary)]">
+                  <button
+                    type="button"
+                    onClick={handleToggleLike}
+                    disabled={likeBusy}
+                    className="h-7 w-7 flex items-center justify-center rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-bg-dark"
+                    aria-label="Berikan like"
+                  >
+                    <FiHeart
+                      className={
+                        liked
+                          ? "text-red-500 fill-red-500 text-sm"
+                          : "text-slate-500 text-sm"
+                      }
+                    />
+                  </button>
+                  <span>
+                    {formatCount(likeCount)} ♥ | {comments.length} komentar
                   </span>
-                </span>
+                </div>
               </div>
 
               {/* FORM KOMENTAR */}
@@ -613,7 +589,7 @@ export default function ProductDetailPage() {
                 </button>
               </form>
 
-              {/* LIST KOMENTAR – default sedikit, sisanya di-toggle */}
+              {/* LIST KOMENTAR */}
               <div className="border border-slate-200 dark:border-slate-600 rounded-lg p-3 bg-slate-50/60 dark:bg-slate-800/40">
                 {comments.length === 0 ? (
                   <p className="text-[11px] text-slate-500 dark:text-[var(--text-secondary)]">
