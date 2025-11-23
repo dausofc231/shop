@@ -30,7 +30,6 @@ export default function CartPage() {
   const [changingQty, setChangingQty] = useState({});
 
   const [expandedNames, setExpandedNames] = useState({});
-  const [expandedPrices, setExpandedPrices] = useState({});
 
   /* THEME INIT */
   useEffect(() => {
@@ -219,7 +218,6 @@ export default function CartPage() {
                 {items.map((item) => {
                   const qty = Number(item.qty || 1);
                   const isNameExpanded = !!expandedNames[item.id];
-                  const isPriceExpanded = !!expandedPrices[item.id];
 
                   return (
                     <div
@@ -252,7 +250,7 @@ export default function CartPage() {
                       <div className="flex-1 flex flex-col justify-between">
                         {/* bungkus nama + harga dengan max-width supaya nggak ngedorong card */}
                         <div className="max-w-[220px] sm:max-w-[280px]">
-                          {/* NAMA */}
+                          {/* NAMA (bisa expand/collapse) */}
                           <p
                             className={`text-[12px] font-semibold text-slate-900 dark:text-[var(--text)] cursor-pointer break-words ${
                               isNameExpanded ? "line-clamp-none" : "line-clamp-1"
@@ -268,19 +266,9 @@ export default function CartPage() {
                             {item.name || "Tanpa nama"}
                           </p>
 
-                          {/* HARGA */}
+                          {/* HARGA (SELALU 1 BARIS, TRUNCATE) */}
                           <p
-                            className={`text-[11px] text-primary font-semibold mt-0.5 cursor-pointer ${
-                              isPriceExpanded
-                                ? "whitespace-normal break-all"
-                                : "truncate"
-                            }`}
-                            onClick={() =>
-                              setExpandedPrices((prev) => ({
-                                ...prev,
-                                [item.id]: !prev[item.id],
-                              }))
-                            }
+                            className="text-[11px] text-primary font-semibold mt-0.5 truncate"
                             title={formatRupiah(item.price)}
                           >
                             {formatRupiah(item.price)}
@@ -336,7 +324,11 @@ export default function CartPage() {
                 <span className="text-xs text-slate-600 dark:text-[var(--text-secondary)]">
                   Total ({totalItem} item)
                 </span>
-                <span className="text-sm font-semibold text-slate-900 dark:text-[var(--text)] max-w-[70%] text-right break-all">
+                {/* TOTAL HARGA: 1 baris, truncate */}
+                <span
+                  className="text-sm font-semibold text-slate-900 dark:text-[var(--text)] max-w-[70%] text-right truncate"
+                  title={formatRupiah(totalHarga)}
+                >
                   {formatRupiah(totalHarga)}
                 </span>
               </div>
