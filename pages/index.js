@@ -53,9 +53,45 @@ const sliderData = [
   },
 ];
 
+// format saldo supaya nggak “tembus” layar
+function formatCompact(n) {
+  const num = Number(n || 0);
+  if (num >= 1_000_000_000_000) {
+    return (
+      (num / 1_000_000_000_000).toLocaleString("id-ID", {
+        maximumFractionDigits: 1,
+      }) + " T"
+    );
+  }
+  if (num >= 1_000_000_000) {
+    return (
+      (num / 1_000_000_000).toLocaleString("id-ID", {
+        maximumFractionDigits: 1,
+      }) + " M"
+    );
+  }
+  if (num >= 1_000_000) {
+    return (
+      (num / 1_000_000).toLocaleString("id-ID", {
+        maximumFractionDigits: 1,
+      }) + " jt"
+    );
+  }
+  if (num >= 1_000) {
+    return (
+      (num / 1_000).toLocaleString("id-ID", {
+        maximumFractionDigits: 1,
+      }) + " rb"
+    );
+  }
+  return num.toLocaleString("id-ID");
+}
+
 export default function Home() {
   const [products, setProducts] = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
+
+  const [popularIds, setPopularIds] = useState([]); // 3 produk dengan like terbanyak
 
   const [theme, setTheme] = useState("dark");
   const [menuOpen, setMenuOpen] = useState(false);
@@ -75,9 +111,6 @@ export default function Home() {
   const [searchFocused, setSearchFocused] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState("semua");
   const [filterOpen, setFilterOpen] = useState(false);
-
-  // id produk top-3 likes (untuk label & filter populer)
-  const [popularIds, setPopularIds] = useState([]);
 
   const filterLabel = {
     semua: "Terbaru",
@@ -138,20 +171,18 @@ export default function Home() {
       try {
         const q = query(collection(db, "products"), orderBy("createdAt", "desc"));
         const snapshot = await getDocs(q);
-        const data = snapshot.docs.map((d) => {
-          const raw = d.data();
-          const likes = typeof raw.likes === "number" ? raw.likes : 0;
-          return { id: d.id, ...raw, likes };
-        });
-
-        // tentukan 3 produk dengan like terbanyak (>0)
-        const sortedByLikes = [...data].sort(
-          (a, b) => Number(b.likes || 0) - Number(a.likes || 0)
-        );
-        const top3 = sortedByLikes.filter((p) => Number(p.likes || 0) > 0).slice(0, 3);
-        setPopularIds(top3.map((p) => p.id));
+        const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 
         setProducts(data);
+
+        // hitung 3 produk dengan like terbanyak
+        const sortedByLikes = [...data].sort((a, b) => {
+          const la = Number(a.likes || 0);
+          const lb = Number(b.likes || 0);
+          return lb - la;
+        });
+        const top3 = sortedByLikes.slice(0, 3).map((p) => p.id);
+        setPopularIds(top3);
       } catch (err) {
         console.error(err);
       } finally {
@@ -207,6 +238,7 @@ export default function Home() {
     try {
       await signOut(auth);
       setMenuOpen(false);
+      setShowAvatarInput(false);
     } catch (err) {
       console.error(err);
     }
@@ -221,28 +253,6 @@ export default function Home() {
       return "-";
     }
   })();
-
-  /* HELPER LABEL POPULER / BARU */
-  const isPopular = (p) => popularIds.includes(p.id);
-
-  const isNew = (p) => {
-    if (isPopular(p)) return false;
-
-    if (Array.isArray(p.labels) && p.labels.includes("baru")) return true;
-
-    try {
-      if (p.createdAt && typeof p.createdAt.toDate === "function") {
-        const created = p.createdAt.toDate();
-        const now = new Date();
-        const diffMs = now - created;
-        const diffDay = diffMs / (1000 * 60 * 60 * 24);
-        return diffDay <= 7;
-      }
-    } catch {
-      // ignore
-    }
-    return false;
-  };
 
   /* FILTER & SEARCH PRODUK */
   let filteredProducts = products.filter((p) => {
@@ -262,7 +272,9 @@ export default function Home() {
       return hasDiscountNumber || hasDiscountLabel;
     });
   } else if (selectedFilter === "populer") {
-    filteredProducts = filteredProducts.filter((p) => isPopular(p));
+    filteredProducts = filteredProducts.filter((p) =>
+      popularIds.includes(p.id)
+    );
   }
 
   if (selectedFilter === "termurah") {
@@ -319,17 +331,17 @@ export default function Home() {
             }}
           />
 
-          <div className="absolute right-0 top-0 h-full w-64 bg-white dark:bg-card-dark shadow-xl p-4 flex flex-col gap-3">
+          <div className="absolute right-0 top-0 h-full w-64 bg-[#111827] dark:bg-card-dark text-white shadow-xl p-4 flex flex-col gap-3">
             {userDoc ? (
-              <div className="flex flex-col gap-2 text-xs text-slate-800 dark:text-[var(--text)]">
-                {/* BARIS ATAS: FOTO + GARIS + NAMA / TGL / SALDO / ROLE */}
+              <div className="flex flex-col gap-2 text-xs text-slate-100">
+                {/* FOTO + NAMA + TGL/ROLE */}
                 <div className="flex items-start">
-                  {/* avatar + garis vertikal */}
+                  {/* avatar + garis */}
                   <div className="relative pr-3 mr-3">
                     <button
                       type="button"
                       onClick={() => setShowAvatarInput((v) => !v)}
-                      className="h-10 w-10 rounded-full border border-slate-300 dark:border-slate-600 overflow-hidden bg-white dark:bg-bg-dark flex-shrink-0"
+                      className="h-10 w-10 rounded-full border border-slate-500 overflow-hidden bg-white/5 flex-shrink-0 flex items-center justify-center"
                     >
                       {userDoc.photoURL ? (
                         <img
@@ -337,56 +349,51 @@ export default function Home() {
                           className="h-full w-full object-cover"
                         />
                       ) : (
-                        <FiUser className="text-slate-500 dark:text-[var(--text-secondary)] h-full w-full p-2" />
+                        <FiUser className="text-slate-300 h-full w-full p-2" />
                       )}
                     </button>
-                    {/* garis pembatas putih (coklat di dark) */}
-                    <span className="pointer-events-none absolute right-0 top-0 bottom-0 w-px bg-slate-200 dark:bg-slate-700" />
+                    <span className="pointer-events-none absolute right-0 top-0 bottom-0 w-px bg-slate-600" />
                   </div>
 
-                  {/* teks kanan: nama, tgl, saldo, role */}
-                  <div className="flex-1 space-y-1">
-                    {/* nama & tanggal */}
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-semibold truncate">
+                  <div className="flex-1 space-y-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold truncate flex-1 min-w-0">
                         {userDoc.username}
                       </span>
-                      <span className="text-[10px] text-slate-500 dark:text-[var(--text-secondary)] whitespace-nowrap">
-                        {createdDate}
-                      </span>
+                      <div className="flex flex-col items-end flex-shrink-0">
+                        <span className="text-[10px] text-slate-400 whitespace-nowrap">
+                          {createdDate}
+                        </span>
+                        <span className="mt-0.5 px-2 py-0.5 rounded-full bg-slate-800 text-[10px] font-medium whitespace-nowrap">
+                          {userDoc.role || "-"}
+                        </span>
+                      </div>
                     </div>
 
-                    {/* saldo & role */}
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-[11px] truncate">
+                    <div className="flex items-center gap-1">
+                      <span className="text-[11px] truncate flex-1 min-w-0">
                         Saldo:{" "}
                         <span className="font-semibold">
-                          Rp{" "}
-                          {Number(userDoc.saldo || 0).toLocaleString("id-ID")}
+                          Rp {formatCompact(userDoc.saldo || 0)}
                         </span>
-                      </span>
-                      <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-[10px] font-medium whitespace-nowrap">
-                        {userDoc.role || "-"}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* UID: dekat & pendek */}
-                <div className="mt-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-1.5 flex items-center gap-1.5">
-                  <span className="text-[10px] text-slate-500 dark:text-[var(--text-secondary)]">
-                    UID:
-                  </span>
+                {/* UID */}
+                <div className="mt-1 rounded-lg bg-slate-800 border border-slate-600 px-2 py-1.5 flex items-center gap-1.5">
+                  <span className="text-[10px] text-slate-400">UID:</span>
                   <span className="text-[10px] font-mono truncate">
                     {userDoc.uid}
                   </span>
                 </div>
 
-                {/* KOLOM URL FOTO + BUTTON */}
+                {/* input URL foto (muncul kalau foto diklik) */}
                 {showAvatarInput && (
                   <div className="mt-2 flex items-center gap-2">
                     <input
-                      className="input text-[11px] h-8 px-2 py-1 flex-1"
+                      className="input text-[11px] h-8 px-2 py-1 flex-1 bg-slate-900/60 border-slate-600"
                       placeholder="URL foto profil"
                       value={avatarInput}
                       onChange={(e) => setAvatarInput(e.target.value)}
@@ -402,38 +409,28 @@ export default function Home() {
                 )}
               </div>
             ) : (
-              <p className="text-xs text-slate-500 dark:text-[var(--text-secondary)]">
-                Belum login
-              </p>
+              <p className="text-xs text-slate-300">Belum login</p>
             )}
 
-            <div className="border-t border-slate-200 dark:border-slate-700" />
+            <div className="border-t border-slate-700" />
 
-            <nav className="flex flex-col gap-2 text-sm">
-              <Link
-                href="/"
-                className="hover:underline text-slate-800 dark:text-[var(--text)]"
-              >
+            <nav className="flex flex-col gap-2 text-sm text-slate-100">
+              <Link href="/" className="hover:underline">
                 Home
               </Link>
-              <button className="text-left hover:underline text-slate-800 dark:text-[var(--text)]">
-                Blog
-              </button>
-              <button className="text-left hover:underline text-slate-800 dark:text-[var(--text)]">
+              <button className="text-left hover:underline">Blog</button>
+              <button className="text-left hover:underline">
                 Dokumen API
               </button>
 
               {userDoc && (
                 <>
-                  <Link
-                    href={dashboardPath}
-                    className="hover:underline mt-2 text-slate-800 dark:text-[var(--text)]"
-                  >
+                  <Link href={dashboardPath} className="hover:underline mt-2">
                     Dasbor
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="text-left text-red-500 mt-1"
+                    className="text-left text-red-400 mt-1"
                   >
                     Logout
                   </button>
@@ -441,10 +438,7 @@ export default function Home() {
               )}
 
               {!userDoc && (
-                <Link
-                  href="/auth/login"
-                  className="hover:underline mt-2 text-slate-800 dark:text-[var(--text)]"
-                >
+                <Link href="/auth/login" className="hover:underline mt-2">
                   Login
                 </Link>
               )}
@@ -622,12 +616,12 @@ export default function Home() {
                   ? Math.round((basePrice * (100 - discountPercent)) / 100)
                   : basePrice;
 
-                const productIsPopular = isPopular(p);
-                const productIsNew = isNew(p);
+                const likes = Number(p.likes || 0);
+                const isPopular = likes > 0 && popularIds.includes(p.id);
 
-                const topLabel = productIsPopular
+                const topLabel = isPopular
                   ? "Populer"
-                  : productIsNew
+                  : Array.isArray(p.labels) && p.labels.includes("baru")
                   ? "Baru"
                   : null;
 
@@ -668,14 +662,12 @@ export default function Home() {
                         </div>
                       )}
 
-                      {/* diskon di pojok kiri */}
                       {hasDiscount && (
-                        <span className="absolute top-2 left-2 px-2 py-1 rounded-full bg-red-500 text-[10px] font-semibold text-white shadow-sm">
+                        <span className="absolute top-2 left-2 px-2 py-1 rounded-full bg-red-500/90 text-[10px] font-semibold text-white shadow-sm">
                           -{discountPercent}%
                         </span>
                       )}
 
-                      {/* label populer / baru di pojok kanan */}
                       {topLabel && (
                         <span className="absolute top-2 right-2 px-2 py-1 rounded-full bg-primary/90 text-[10px] font-semibold text-white shadow-sm">
                           {topLabel}
@@ -689,12 +681,15 @@ export default function Home() {
                         {p.name}
                       </h3>
 
-                      <span className="text-xs font-semibold text-primary whitespace-nowrap overflow-hidden text-ellipsis">
-                        Rp {finalPrice.toLocaleString("id-ID")}
-                      </span>
+                      {/* harga, dijaga supaya tidak kebelah baris */}
+                      <div className="text-xs">
+                        <span className="font-semibold text-primary block whitespace-nowrap truncate">
+                          Rp {finalPrice.toLocaleString("id-ID")}
+                        </span>
+                      </div>
 
                       {p.description && (
-                        <p className="text-[11px] text-slate-600 dark:text-[var(--text-secondary)] line-clamp-2 overflow-hidden whitespace-pre-line break-words">
+                        <p className="text-[11px] text-slate-600 dark:text-[var(--text-secondary)] line-clamp-2 overflow-hidden">
                           {p.description}
                         </p>
                       )}
