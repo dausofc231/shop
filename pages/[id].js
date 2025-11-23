@@ -391,7 +391,7 @@ export default function ProductDetailPage() {
       });
 
       setCartAdded(true);
-      setCartCount((c) => c + 1); // update angka cart atas
+      setCartCount((c) => c + 1); // update angka cart atas (1 per produk)
     } catch (err) {
       console.error("Gagal tambah ke keranjang:", err);
     } finally {
@@ -433,28 +433,20 @@ export default function ProductDetailPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* CART ICON ATAS */}
-            <button
-              type="button"
-              onClick={
-                currentUser ? () => router.push("/cart") : undefined
-              }
-              disabled={!currentUser}
-              className={`relative h-8 w-8 flex items-center justify-center rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-card-dark ${
-                !currentUser ? "opacity-60 cursor-not-allowed" : ""
-              }`}
-              aria-label="Lihat keranjang"
-            >
-              <FiShoppingCart className="text-slate-700 dark:text-[var(--text)]" />
-              {cartCount > 0 && (
+            {/* CART ICON ATAS – hanya muncul kalau sudah login, angka mulai dari 0 */}
+            {currentUser && (
+              <button
+                type="button"
+                onClick={() => router.push("/cart")}
+                className="relative h-8 w-8 flex items-center justify-center rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-card-dark"
+                aria-label="Lihat keranjang"
+              >
+                <FiShoppingCart className="text-slate-700 dark:text-[var(--text)]" />
                 <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-0.5 rounded-full bg-primary text-[10px] text-white flex items-center justify-center">
                   {cartCount > 99 ? "99+" : cartCount}
                 </span>
-              )}
-              {!currentUser && (
-                <span className="absolute w-[1px] h-5 bg-slate-500 rotate-45" />
-              )}
-            </button>
+              </button>
+            )}
 
             {/* THEME TOGGLE */}
             <button
@@ -843,26 +835,24 @@ export default function ProductDetailPage() {
       {!loading && !notFound && product && (
         <div className="sticky bottom-0 inset-x-0 border-t border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-bg-dark/90 backdrop-blur z-20">
           <div className="max-w-5xl mx-auto px-4 py-2 flex items-center gap-2">
-            {/* Tombol Add to Cart (bawah) */}
-            <button
-              type="button"
-              onClick={handleAddToCart}
-              disabled={
-                !currentUser || stock <= 0 || cartBusy || cartAdded
-              }
-              className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-card-dark text-[11px] font-medium text-slate-800 dark:text-[var(--text)] py-2 disabled:opacity-60"
-            >
-              <FiShoppingCart className="text-xs" />
-              <span>
-                {!currentUser
-                  ? "Login untuk menambah"
-                  : cartAdded
-                  ? "Sudah di keranjang"
-                  : stock > 0
-                  ? "Tambah ke Keranjang"
-                  : "Stok Habis"}
-              </span>
-            </button>
+            {/* Tombol Add to Cart (bawah) – hanya kalau sudah login */}
+            {currentUser && (
+              <button
+                type="button"
+                onClick={handleAddToCart}
+                disabled={stock <= 0 || cartBusy || cartAdded}
+                className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-card-dark text-[11px] font-medium text-slate-800 dark:text-[var(--text)] py-2 disabled:opacity-60"
+              >
+                <FiShoppingCart className="text-xs" />
+                <span>
+                  {cartAdded
+                    ? "Sudah di keranjang"
+                    : stock > 0
+                    ? "Tambah ke Keranjang"
+                    : "Stok Habis"}
+                </span>
+              </button>
+            )}
 
             {/* Tombol Buy Now */}
             <button
@@ -871,7 +861,11 @@ export default function ProductDetailPage() {
               disabled={!currentUser || stock <= 0}
               className="flex-1 inline-flex items-center justify-center rounded-lg bg-primary text-white text-[11px] font-semibold py-2 disabled:opacity-60"
             >
-              {stock > 0 ? "Beli Sekarang" : "Stok Habis"}
+              {!currentUser
+                ? "Login untuk beli"
+                : stock > 0
+                ? "Beli Sekarang"
+                : "Stok Habis"}
             </button>
           </div>
         </div>
