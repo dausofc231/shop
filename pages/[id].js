@@ -54,6 +54,7 @@ export default function ProductDetailPage() {
 
   const [theme, setTheme] = useState("dark");
   const [currentUser, setCurrentUser] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -78,6 +79,7 @@ export default function ProductDetailPage() {
   const [comments, setComments] = useState([]);
   const [showAllComments, setShowAllComments] = useState(false);
   const [savingComment, setSavingComment] = useState(false);
+  const [expandedComments, setExpandedComments] = useState({});
 
   /* THEME INIT */
   useEffect(() => {
@@ -105,6 +107,32 @@ export default function ProductDetailPage() {
     });
     return () => unsub();
   }, []);
+
+  /* LOAD PROFIL USER (username -> default nama komentar) */
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (!currentUser) {
+        setUserProfile(null);
+        return;
+      }
+      try {
+        const ref = doc(db, "users", currentUser.uid);
+        const snap = await getDoc(ref);
+        if (snap.exists()) {
+          const data = snap.data();
+          setUserProfile(data);
+          // kalau kolom nama komentar masih kosong, isi dari username
+          if (!commentName) {
+            setCommentName(data.username || "");
+          }
+        }
+      } catch (err) {
+        console.error("Gagal load profil user:", err);
+      }
+    };
+    loadProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser]);
 
   /* LOAD PRODUCT BY ID */
   useEffect(() => {
@@ -201,10 +229,7 @@ export default function ProductDetailPage() {
   /* LIKE HANDLER – 1 akun = 1 like, wajib login */
   const handleToggleLike = async () => {
     if (!product || !id) return;
-    if (!currentUser) {
-      // kalau belum login, tombol di UI sudah dinonaktifkan; di sini cukup diam.
-      return;
-    }
+    if (!currentUser) return;
     if (likeBusy) return;
 
     setLikeBusy(true);
@@ -242,7 +267,6 @@ export default function ProductDetailPage() {
       }
     } catch (err) {
       console.error("Gagal update like:", err);
-      // rollback
       setLiked(prevLiked);
       setLikeCount(prevCount);
     } finally {
@@ -422,16 +446,24 @@ export default function ProductDetailPage() {
                   )}
                 </div>
 
-                {/* TERJUAL | STOK */}
-                <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-[var(--text-secondary)] px-0.5">
-                  <span>
-                    Terjual:{" "}
-                    <span className="font-semibold">{formatCount(sold)}</span>
-                  </span>
-                  <span>
-                    Stok:{" "}
-                    <span className="font-semibold">{formatCount(stock)}</span>
-                  </span>
+                {/* TERJUAL | STOK (lapisan kecil) */}
+                <div className="flex gap-2 text-[11px] px-0.5">
+                  <div className="flex-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-1 flex items-center justify-between">
+                    <span className="text-slate-500 dark:text-[var(--text-secondary)]">
+                      Terjual
+                    </span>
+                    <span className="font-semibold text-slate-800 dark:text-[var(--text)]">
+                      {formatCount(sold)}
+                    </span>
+                  </div>
+                  <div className="flex-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-1 flex items-center justify-between">
+                    <span className="text-slate-500 dark:text-[var(--text-secondary)]">
+                      Stok
+                    </span>
+                    <span className="font-semibold text-slate-800 dark:text-[var(--text)]">
+                      {formatCount(stock)}
+                    </span>
+                  </div>
                 </div>
 
                 {/* THUMBNAILS */}
@@ -460,10 +492,10 @@ export default function ProductDetailPage() {
               </div>
 
               {/* TITLE + HARGA */}
-              <div className="pt-2 border-t border-slate-200 dark:border-slate-700 space-y-1">
+              <div className="pt-2 border-t border-slate-200 dark:border-slate-700 space-y-1 px-0.5">
                 <h1
                   className={`text-base sm:text-lg font-semibold text-slate-900 dark:text-[var(--text)] break-words ${
-                    showFullTitle ? "" : "line-clamp-2"
+                    showFullTitle ? "" : "line-clamp-1"
                   } cursor-pointer`}
                   onClick={() => setShowFullTitle((v) => !v)}
                   title={product.name}
@@ -471,32 +503,36 @@ export default function ProductDetailPage() {
                   {product.name}
                 </h1>
 
-                <div className="flex flex-col items-start gap-0.5 mt-0.5">
-                  <span className="font-semibold text-primary text-sm sm:text-base">
-                    Rp {finalPrice.toLocaleString("id-ID")}
-                  </span>
+                <div className="border-t border-slate-200 dark:border-slate-700 my-1" />
 
-                  {hasDiscount && (
-                    <div className="flex items-center gap-1">
-                      <span className="text-[11px] text-slate-400 line-through">
-                        Rp {basePrice.toLocaleString("id-ID")}
-                      </span>
+                <div className="flex flex-col gap-0.5">
+                  <div className="flex items-baseline gap-1">
+                    <span className="font-semibold text-primary text-sm">
+                      Rp {finalPrice.toLocaleString("id-ID")}
+                    </span>
+                    {hasDiscount && (
                       <span className="text-[11px] font-semibold text-red-500">
                         -{discountPercent}%
                       </span>
-                    </div>
+                    )}
+                  </div>
+
+                  {hasDiscount && (
+                    <span className="text-[10px] text-slate-400 line-through">
+                      Rp {basePrice.toLocaleString("id-ID")}
+                    </span>
                   )}
                 </div>
               </div>
 
               {/* DESKRIPSI (collapsible + scroll) */}
-              <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-700">
+              <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-700 px-0.5">
                 <h2 className="text-xs font-semibold mb-1 text-slate-900 dark:text-[var(--text)]">
                   Deskripsi Produk
                 </h2>
                 {product.description ? (
                   <div
-                    className={`rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 px-2.5 py-2 cursor-pointer overflow-y-auto ${
+                    className={`rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 px-2 py-2 cursor-pointer overflow-y-auto ${
                       showFullDesc ? "max-h-52" : "max-h-24"
                     }`}
                     onClick={() => setShowFullDesc((v) => !v)}
@@ -515,7 +551,7 @@ export default function ProductDetailPage() {
               {/* KATEGORI (slider horizontal 1 baris) */}
               {Array.isArray(product.categories) &&
                 product.categories.length > 0 && (
-                  <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-700">
+                  <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-700 px-0.5">
                     <h2 className="text-xs font-semibold mb-1 text-slate-900 dark:text-[var(--text)]">
                       Kategori
                     </h2>
@@ -535,7 +571,7 @@ export default function ProductDetailPage() {
 
             {/* CARD RATING & KOMENTAR */}
             <section className="card">
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between mb-3 px-0.5">
                 <h2 className="text-sm font-semibold text-slate-900 dark:text-[var(--text)]">
                   Ulasan & Rating
                 </h2>
@@ -568,7 +604,7 @@ export default function ProductDetailPage() {
 
               {/* INFO JIKA BELUM LOGIN */}
               {!currentUser && (
-                <div className="mb-4 flex items-start gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2">
+                <div className="mb-4 mx-0.5 flex items-start gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2">
                   <FiEyeOff className="mt-0.5 text-slate-500 dark:text-[var(--text-secondary)] text-sm" />
                   <p className="text-[11px] text-slate-600 dark:text-[var(--text-secondary)] leading-snug">
                     Login terlebih dahulu untuk memberi ♥ dan menulis komentar.
@@ -579,14 +615,17 @@ export default function ProductDetailPage() {
 
               {/* FORM KOMENTAR (HANYA JIKA LOGIN) */}
               {currentUser && (
-                <form onSubmit={handleSubmitComment} className="grid gap-2 mb-4">
+                <form
+                  onSubmit={handleSubmitComment}
+                  className="grid gap-2 mb-4 mx-0.5"
+                >
                   <div className="grid gap-1">
                     <label className="text-[11px] text-slate-700 dark:text-[var(--text-secondary)]">
                       Nama
                     </label>
                     <input
                       className="input text-[11px]"
-                      placeholder="Nama kamu (boleh kosong, jadi Anonim)"
+                      placeholder="Nama kamu (boleh diubah, default dari username)"
                       value={commentName}
                       onChange={(e) => setCommentName(e.target.value)}
                     />
@@ -619,7 +658,7 @@ export default function ProductDetailPage() {
               )}
 
               {/* LIST KOMENTAR */}
-              <div className="border border-slate-200 dark:border-slate-600 rounded-lg p-3 bg-slate-50/60 dark:bg-slate-800/40">
+              <div className="border border-slate-200 dark:border-slate-600 rounded-lg p-3 bg-slate-50/60 dark:bg-slate-800/40 mx-0.5">
                 {comments.length === 0 ? (
                   <p className="text-[11px] text-slate-500 dark:text-[var(--text-secondary)]">
                     Belum ada komentar. Jadilah yang pertama memberikan ulasan.
@@ -641,6 +680,8 @@ export default function ProductDetailPage() {
                           tanggal = "";
                         }
 
+                        const isExpanded = !!expandedComments[c.id];
+
                         return (
                           <div
                             key={c.id}
@@ -657,7 +698,17 @@ export default function ProductDetailPage() {
                               )}
                             </div>
                             <div className="border-t border-slate-200 dark:border-slate-700 mt-1 pt-1">
-                              <p className="text-[11px] text-slate-600 dark:text-[var(--text-secondary)] leading-snug whitespace-pre-wrap break-words">
+                              <p
+                                className={`text-[11px] text-slate-600 dark:text-[var(--text-secondary)] leading-snug whitespace-pre-wrap break-words cursor-pointer ${
+                                  isExpanded ? "" : "line-clamp-3"
+                                }`}
+                                onClick={() =>
+                                  setExpandedComments((prev) => ({
+                                    ...prev,
+                                    [c.id]: !prev[c.id],
+                                  }))
+                                }
+                              >
                                 {c.text}
                               </p>
                             </div>
