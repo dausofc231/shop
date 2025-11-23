@@ -227,8 +227,8 @@ export default function CartPage() {
                       key={item.id}
                       className="flex gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 p-2 items-stretch"
                     >
-                      {/* KIRI: IMAGE + LINK */}
-                      <div className="flex flex-col items-center justify-between w-20">
+                      {/* KIRI: IMAGE + LINK (dekat, nggak kejauhan) */}
+                      <div className="flex flex-col items-center gap-1 w-20">
                         <div className="h-16 w-16 rounded-md overflow-hidden bg-slate-200 dark:bg-slate-700 flex-shrink-0">
                           {item.image ? (
                             <img
@@ -240,7 +240,7 @@ export default function CartPage() {
                         </div>
                         <Link
                           href={`/${item.productId || item.id}`}
-                          className="mt-1 text-[11px] text-primary hover:underline text-center"
+                          className="text-[11px] text-primary hover:underline text-center"
                         >
                           Lihat produk
                         </Link>
@@ -270,10 +270,10 @@ export default function CartPage() {
 
                           {/* HARGA */}
                           <p
-                            className={`text-[11px] text-primary font-semibold mt-0.5 cursor-pointer max-w-[90%] ${
+                            className={`text-[11px] text-primary font-semibold mt-0.5 cursor-pointer ${
                               isPriceExpanded
-                                ? "break-all whitespace-normal"
-                                : "overflow-hidden text-ellipsis whitespace-nowrap"
+                                ? "whitespace-normal break-words"
+                                : "truncate"
                             }`}
                             onClick={() =>
                               setExpandedPrices((prev) => ({
@@ -285,13 +285,6 @@ export default function CartPage() {
                           >
                             {formatRupiah(item.price)}
                           </p>
-
-                          {/* Info qty saat harga di bawahnya (supaya nggak nambah panjang baris harga) */}
-                          {qty > 1 && (
-                            <p className="text-[10px] text-slate-500 dark:text-[var(--text-secondary)] mt-0.5">
-                              (per item, qty {qty})
-                            </p>
-                          )}
                         </div>
 
                         {/* BAWAH: QTY CONTROLS + HAPUS */}
