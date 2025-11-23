@@ -633,29 +633,12 @@ export default function Home() {
                   ? "Baru"
                   : null;
 
-                // buat URL cantik berdasarkan nama produk (tanpa simpan slug di DB)
-                const rawName = (p.name || "produk")
-                  .toString()
-                  .toLowerCase()
-                  .trim();
-                const slug =
-                  rawName
-                    .replace(/[^a-z0-9]+/gi, "-")
-                    .replace(/(^-|-$)/g, "") || "produk";
-                const prettyUrl = `/katalog/${slug}`;
-
-                const hrefInternal = {
-                  pathname: "/[id]", // pages/[id].js
-                  query: { id: p.id },
-                };
-
                 return (
-                  <Link
-                    key={p.id}
-                    href={hrefInternal}
-                    as={prettyUrl}
-                    className="rounded-xl bg-white dark:bg-card-dark shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden hover:-translate-y-1 hover:shadow-lg transition-all"
-                  >
+  <Link
+    key={p.id}
+    href={`/${p.id}`} // langsung pakai id, cocok dengan pages/[id].js
+    className="rounded-xl bg-white dark:bg-card-dark shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden hover:-translate-y-1 hover:shadow-lg transition-all"
+  >
                     {/* IMAGE + LABEL ATAS */}
                     <div className="relative w-full aspect-[4/3] bg-slate-200 dark:bg-slate-700 overflow-hidden">
                       {mainImage ? (
