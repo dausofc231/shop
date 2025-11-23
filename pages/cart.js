@@ -30,6 +30,7 @@ export default function CartPage() {
   const [changingQty, setChangingQty] = useState({});
 
   const [expandedNames, setExpandedNames] = useState({});
+  const [expandedPrices, setExpandedPrices] = useState({});
 
   /* THEME INIT */
   useEffect(() => {
@@ -133,6 +134,7 @@ export default function CartPage() {
 
   const handleCheckout = () => {
     if (!currentUser || items.length === 0) return;
+    // TODO: arahkan ke halaman checkout sesuai kebutuhan kamu
     console.log("Checkout dengan item:", items);
   };
 
@@ -218,13 +220,14 @@ export default function CartPage() {
                 {items.map((item) => {
                   const qty = Number(item.qty || 1);
                   const isNameExpanded = !!expandedNames[item.id];
+                  const isPriceExpanded = !!expandedPrices[item.id];
 
                   return (
                     <div
                       key={item.id}
                       className="flex gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 p-2 items-stretch"
                     >
-                      {/* KIRI: IMAGE + LINK */}
+                      {/* KIRI: IMAGE + LINK (dekat, nggak kejauhan) */}
                       <div className="flex flex-col items-center gap-1 w-20">
                         <div className="h-16 w-16 rounded-md overflow-hidden bg-slate-200 dark:bg-slate-700 flex-shrink-0">
                           {item.image ? (
@@ -248,9 +251,8 @@ export default function CartPage() {
 
                       {/* KANAN: NAMA, HARGA, QTY + HAPUS */}
                       <div className="flex-1 flex flex-col justify-between">
-                        {/* bungkus nama + harga dengan max-width supaya nggak ngedorong card */}
-                        <div className="max-w-[220px] sm:max-w-[280px]">
-                          {/* NAMA (bisa expand/collapse) */}
+                        <div>
+                          {/* NAMA */}
                           <p
                             className={`text-[12px] font-semibold text-slate-900 dark:text-[var(--text)] cursor-pointer break-words ${
                               isNameExpanded ? "line-clamp-none" : "line-clamp-1"
@@ -266,9 +268,19 @@ export default function CartPage() {
                             {item.name || "Tanpa nama"}
                           </p>
 
-                          {/* HARGA (SELALU 1 BARIS, TRUNCATE) */}
+                          {/* HARGA */}
                           <p
-                            className="text-[11px] text-primary font-semibold mt-0.5 truncate"
+                            className={`text-[11px] text-primary font-semibold mt-0.5 cursor-pointer ${
+                              isPriceExpanded
+                                ? "whitespace-normal break-words"
+                                : "truncate"
+                            }`}
+                            onClick={() =>
+                              setExpandedPrices((prev) => ({
+                                ...prev,
+                                [item.id]: !prev[item.id],
+                              }))
+                            }
                             title={formatRupiah(item.price)}
                           >
                             {formatRupiah(item.price)}
@@ -320,15 +332,11 @@ export default function CartPage() {
 
             {/* RINGKASAN */}
             <section className="card p-3 sm:p-4">
-              <div className="flex items-center justify-between mb-2 gap-2">
+              <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-slate-600 dark:text-[var(--text-secondary)]">
                   Total ({totalItem} item)
                 </span>
-                {/* TOTAL HARGA: 1 baris, truncate */}
-                <span
-                  className="text-sm font-semibold text-slate-900 dark:text-[var(--text)] max-w-[70%] text-right truncate"
-                  title={formatRupiah(totalHarga)}
-                >
+                <span className="text-sm font-semibold text-slate-900 dark:text-[var(--text)] max-w-[90%] break-all">
                   {formatRupiah(totalHarga)}
                 </span>
               </div>
