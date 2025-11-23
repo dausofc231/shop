@@ -321,9 +321,14 @@ export default function Home() {
 
           <div className="absolute right-0 top-0 h-full w-64 bg-white dark:bg-card-dark shadow-xl p-4 flex flex-col gap-3">
             {userDoc ? (
-              <div className="flex flex-col gap-2 text-xs text-slate-800 dark:text-[var(--text)]">
-                {/* BARIS ATAS: FOTO + GARIS + NAMA / TGL / SALDO / ROLE */}
-                <div className="flex items-start">
+              <div className="relative flex flex-col gap-2 text-xs text-slate-800 dark:text-[var(--text)]">
+                {/* TANGGAL DI POJOK KANAN ATAS */}
+                <span className="absolute top-0 right-0 text-[10px] text-slate-500 dark:text-[var(--text-secondary)]">
+                  {createdDate}
+                </span>
+
+                {/* BARIS ATAS: FOTO + NAMA + SALDO+ROLE */}
+                <div className="flex items-start pt-4">
                   {/* avatar + garis vertikal */}
                   <div className="relative pr-3 mr-3">
                     <button
@@ -344,21 +349,16 @@ export default function Home() {
                     <span className="pointer-events-none absolute right-0 top-0 bottom-0 w-px bg-slate-200 dark:bg-slate-700" />
                   </div>
 
-                  {/* teks kanan: nama, tgl, saldo, role */}
+                  {/* teks kanan */}
                   <div className="flex-1 space-y-1 min-w-0">
-                    {/* nama & tanggal */}
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-semibold flex-1 min-w-0 block truncate">
-                        {userDoc.username}
-                      </span>
-                      <span className="text-[10px] text-slate-500 dark:text-[var(--text-secondary)] whitespace-nowrap">
-                        {createdDate}
-                      </span>
-                    </div>
+                    {/* nama (sendiri) */}
+                    <span className="font-semibold block truncate">
+                      {userDoc.username}
+                    </span>
 
-                    {/* saldo & role */}
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="block text-[11px] flex-1 min-w-0 whitespace-nowrap overflow-hidden text-ellipsis">
+                    {/* saldo + role dalam 1 baris */}
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-[11px] flex-1 min-w-0 whitespace-nowrap overflow-hidden text-ellipsis">
                         Saldo:{" "}
                         <span className="font-semibold">
                           Rp{" "}
@@ -372,7 +372,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* UID */}
+                {/* UID – di bawah role */}
                 <div className="mt-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-1.5 flex items-center gap-1.5">
                   <span className="text-[10px] text-slate-500 dark:text-[var(--text-secondary)]">
                     UID:
@@ -631,7 +631,7 @@ export default function Home() {
                   ? "Baru"
                   : null;
 
-                // buat URL cantik berdasarkan nama produk (tanpa simpan slug di DB)
+                // URL cantik
                 const rawName = (p.name || "produk")
                   .toString()
                   .toLowerCase()
