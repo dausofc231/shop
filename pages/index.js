@@ -319,19 +319,11 @@ export default function Home() {
             }}
           />
 
-          {/* tambah "relative" supaya tanggal bisa absolute ke pojok atas */}
-          <div className="absolute right-0 top-0 h-full w-64 bg-white dark:bg-card-dark shadow-xl p-4 flex flex-col gap-3 relative">
-            {/* TANGGAL DI POJOK KANAN ATAS PANEL */}
-            {userDoc && (
-              <span className="absolute top-2 right-4 text-[10px] text-slate-500 dark:text-[var(--text-secondary)]">
-                {createdDate}
-              </span>
-            )}
-
+          <div className="absolute right-0 top-0 h-full w-64 bg-white dark:bg-card-dark shadow-xl p-4 flex flex-col gap-3">
             {userDoc ? (
               <div className="flex flex-col gap-2 text-xs text-slate-800 dark:text-[var(--text)]">
-                {/* BARIS ATAS: FOTO + NAMA */}
-                <div className="flex items-start pt-2">
+                {/* BARIS ATAS: FOTO + GARIS + NAMA / TGL / SALDO / ROLE */}
+                <div className="flex items-start">
                   {/* avatar + garis vertikal */}
                   <div className="relative pr-3 mr-3">
                     <button
@@ -352,29 +344,35 @@ export default function Home() {
                     <span className="pointer-events-none absolute right-0 top-0 bottom-0 w-px bg-slate-200 dark:bg-slate-700" />
                   </div>
 
-                  {/* teks kanan */}
-                  <div className="flex-1 min-w-0">
-                    {/* nama */}
-                    <span className="font-semibold block truncate">
-                      {userDoc.username}
-                    </span>
-
-                    {/* ROLE DIPINDAH KE SINI (DI BAWAH NAMA) */}
-                    <span className="inline-flex mt-1 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-[10px] font-medium whitespace-nowrap">
-                      {userDoc.role || "-"}
-                    </span>
-
-                    {/* saldo di baris sendiri */}
-                    <span className="mt-1 block text-[11px] whitespace-nowrap overflow-hidden text-ellipsis">
-                      Saldo:{" "}
-                      <span className="font-semibold">
-                        Rp {Number(userDoc.saldo || 0).toLocaleString("id-ID")}
+                  {/* teks kanan: nama, tgl, saldo, role */}
+                  <div className="flex-1 space-y-1 min-w-0">
+                    {/* nama & tanggal */}
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-semibold flex-1 min-w-0 block truncate">
+                        {userDoc.username}
                       </span>
-                    </span>
+                      <span className="text-[10px] text-slate-500 dark:text-[var(--text-secondary)] whitespace-nowrap">
+                        {createdDate}
+                      </span>
+                    </div>
+
+                    {/* saldo & role */}
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="block text-[11px] flex-1 min-w-0 whitespace-nowrap overflow-hidden text-ellipsis">
+                        Saldo:{" "}
+                        <span className="font-semibold">
+                          Rp{" "}
+                          {Number(userDoc.saldo || 0).toLocaleString("id-ID")}
+                        </span>
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-[10px] font-medium whitespace-nowrap">
+                        {userDoc.role || "-"}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
-                {/* UID – di bawah role */}
+                {/* UID */}
                 <div className="mt-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-1.5 flex items-center gap-1.5">
                   <span className="text-[10px] text-slate-500 dark:text-[var(--text-secondary)]">
                     UID:
@@ -633,7 +631,7 @@ export default function Home() {
                   ? "Baru"
                   : null;
 
-                // URL cantik
+                // buat URL cantik berdasarkan nama produk (tanpa simpan slug di DB)
                 const rawName = (p.name || "produk")
                   .toString()
                   .toLowerCase()
