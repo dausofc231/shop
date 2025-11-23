@@ -13,6 +13,9 @@ import {
   query,
   orderBy,
   serverTimestamp,
+  setDoc,
+  deleteDoc,
+  increment,
 } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import {
@@ -93,7 +96,7 @@ export default function ProductDetailPage() {
   const toggleTheme = () =>
     setTheme((prev) => (prev === "dark" ? "light" : "dark"));
 
-  /* AUTH (opsional, untuk simpan uid user di komentar) */
+  /* AUTH (untuk 1 akun 1 like + simpan uid di komentar) */
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
@@ -129,6 +132,26 @@ export default function ProductDetailPage() {
     loadProduct();
   }, [id]);
 
+  /* CEK APAKAH USER SUDAH LIKE (1 akun 1 ♥) */
+  useEffect(() => {
+    if (!id || !currentUser) {
+      setLiked(false);
+      return;
+    }
+
+    const checkLiked = async () => {
+      try {
+        const likeRef = doc(db, "products", id, "likes", currentUser.uid);
+        const snap = await getDoc(likeRef);
+        setLiked(snap.exists());
+      } catch (err) {
+        console.error("Gagal cek like user:", err);
+      }
+    };
+
+    checkLiked();
+  }, [id, currentUser]);
+
   /* LOAD COMMENTS DARI SUBKOLEKSI */
   useEffect(() => {
     if (!id) return;
@@ -161,11 +184,11 @@ export default function ProductDetailPage() {
     );
   };
 
-  const handleTouchStart = (e) => {
+  const handleTouchStartImage = (e) => {
     setTouchStartX(e.touches[0].clientX);
   };
 
-  const handleTouchEnd = (e) => {
+  const handleTouchEndImage = (e) => {
     if (touchStartX === null) return;
     const diff = e.changedTouches[0].clientX - touchStartX;
     if (Math.abs(diff) > 40) {
@@ -175,24 +198,52 @@ export default function ProductDetailPage() {
     setTouchStartX(null);
   };
 
-  /* LIKE HANDLER – update Firestore */
+  /* LIKE HANDLER */
   const handleToggleLike = async () => {
     if (!product) return;
 
     const prevLiked = liked;
     const prevCount = likeCount;
 
+    // optimistic UI
     const newLiked = !prevLiked;
-    const newCount = Math.max(prevCount + (newLiked ? 1 : -1), 0);
+    let newCount = prevCount;
+    if (newLiked) newCount = prevCount + 1;
+    else newCount = Math.max(prevCount - 1, 0);
 
     setLiked(newLiked);
     setLikeCount(newCount);
     setProduct((prev) => (prev ? { ...prev, likes: newCount } : prev));
 
     try {
-      await updateDoc(doc(db, "products", product.id), { likes: newCount });
+      const productRef = doc(db, "products", product.id);
+
+      if (currentUser) {
+        // 1 akun = 1 like
+        const likeRef = doc(
+          db,
+          "products",
+          product.id,
+          "likes",
+          currentUser.uid
+        );
+        if (newLiked) {
+          await setDoc(likeRef, {
+            userUid: currentUser.uid,
+            createdAt: serverTimestamp(),
+          });
+          await updateDoc(productRef, { likes: increment(1) });
+        } else {
+          await deleteDoc(likeRef);
+          await updateDoc(productRef, { likes: increment(-1) });
+        }
+      } else {
+        // tanpa akun: bebas, tetap update angka like
+        await updateDoc(productRef, { likes: newCount });
+      }
     } catch (err) {
       console.error("Gagal update likes:", err);
+      // rollback
       setLiked(prevLiked);
       setLikeCount(prevCount);
       setProduct((prev) => (prev ? { ...prev, likes: prevCount } : prev));
@@ -321,8 +372,8 @@ export default function ProductDetailPage() {
                 {/* IMAGE BESAR */}
                 <div
                   className="relative w-full aspect-[4/3] bg-slate-200 dark:bg-slate-700 rounded-xl overflow-hidden"
-                  onTouchStart={handleTouchStart}
-                  onTouchEnd={handleTouchEnd}
+                  onTouchStart={handleTouchStartImage}
+                  onTouchEnd={handleTouchEndImage}
                 >
                   {images.length > 0 ? (
                     <img
@@ -356,7 +407,7 @@ export default function ProductDetailPage() {
                   )}
                 </div>
 
-                {/* THUMBNAILS */}
+                {/* THUMBNAILS SLIDER */}
                 {images.length > 1 && (
                   <div className="flex gap-2 overflow-x-auto pb-1">
                     {images.map((img, idx) => (
@@ -381,11 +432,11 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              {/* TITLE + RATING/TERJUAL/STOK + HARGA */}
+              {/* TITLE + HARGA + INFO KECIL (rating, ♥, terjual, stok) */}
               <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
-                <div className="flex items-start justify-between gap-3 flex-wrap">
+                <div className="flex items-start justify-between gap-2 flex-wrap">
                   {/* Title + harga */}
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-[60%]">
                     <h1
                       className={`text-base sm:text-lg font-semibold text-slate-900 dark:text-[var(--text)] ${
                         showFullTitle ? "" : "truncate"
@@ -396,18 +447,21 @@ export default function ProductDetailPage() {
                       {product.name}
                     </h1>
 
-                    {/* kalau user minta full title, bikin baris sendiri agar nggak ganggu sebelah */}
+                    {/* kalau mau full title, tampilkan di baris baru tanpa ganggu kanan */}
                     {showFullTitle && (
                       <p className="mt-1 text-[11px] text-slate-500 dark:text-[var(--text-secondary)] whitespace-pre-wrap">
                         {product.name}
                       </p>
                     )}
 
-                    <div className="mt-1 flex flex-wrap items-baseline gap-1.5 text-sm sm:text-base">
+                    <div className="mt-1 flex items-baseline gap-1.5 text-sm sm:text-base whitespace-nowrap">
                       {hasDiscount && (
-                        <span className="text-[11px] text-slate-400 line-through">
-                          Rp {basePrice.toLocaleString("id-ID")}
-                        </span>
+                        <>
+                          <span className="text-[11px] text-slate-400 line-through">
+                            Rp {basePrice.toLocaleString("id-ID")}
+                          </span>
+                          <span className="text-[11px] text-slate-400">|</span>
+                        </>
                       )}
 
                       <span className="font-semibold text-primary">
@@ -422,20 +476,18 @@ export default function ProductDetailPage() {
                     </div>
                   </div>
 
-                  {/* Rating + tombol love + terjual/stok */}
-                  <div className="flex flex-col items-end gap-1 text-[11px] text-slate-500 dark:text-[var(--text-secondary)]">
-                    <div className="flex items-center gap-2">
-                      <span className="flex items-center gap-1">
-                        Rating:
-                        <span className="font-semibold">
-                          {formatCount(likeCount)}
-                        </span>
-                        love
+                  {/* Info kecil pojok kanan: rating, ♥, terjual, stok */}
+                  <div className="flex flex-col items-end gap-1 text-[10px] text-slate-500 dark:text-[var(--text-secondary)]">
+                    <div className="flex items-center gap-1">
+                      <span>Rating:</span>
+                      <span className="font-semibold">
+                        {formatCount(likeCount)}
                       </span>
                       <button
                         type="button"
                         onClick={handleToggleLike}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-bg-dark"
+                        className="h-6 w-6 flex items-center justify-center rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-bg-dark"
+                        aria-label="Suka"
                       >
                         <FiHeart
                           className={
@@ -444,11 +496,10 @@ export default function ProductDetailPage() {
                               : "text-slate-500 text-xs"
                           }
                         />
-                        <span>{liked ? "Suka" : "Suka?"}</span>
                       </button>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
                       <span>
                         Terjual:{" "}
                         <span className="font-semibold">
@@ -467,49 +518,41 @@ export default function ProductDetailPage() {
                 </div>
               </div>
 
-              {/* KATEGORI */}
+              {/* KATEGORI – slider horizontal 1 baris */}
               {Array.isArray(product.categories) &&
                 product.categories.length > 0 && (
-                  <div className="mt-3 pt-2 border-t border-slate-200 dark:border-slate-700 flex flex-wrap gap-2">
-                    {product.categories.map((cat) => (
-                      <span
-                        key={cat}
-                        className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-[10px] text-slate-700 dark:text-[var(--text)] border border-slate-200 dark:border-slate-600"
-                      >
-                        {cat}
-                      </span>
-                    ))}
+                  <div className="mt-3 pt-2 border-t border-slate-200 dark:border-slate-700">
+                    <div className="flex gap-2 overflow-x-auto pb-1">
+                      {product.categories.map((cat) => (
+                        <span
+                          key={cat}
+                          className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-[10px] text-slate-700 dark:text-[var(--text)] border border-slate-200 dark:border-slate-600 flex-shrink-0"
+                        >
+                          {cat}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 )}
 
-              {/* DESKRIPSI (collapsible + scroll) */}
+              {/* DESKRIPSI – klik card untuk expand/collapse, tapi tetap dibatasi tinggi (slider) */}
               <div className="mt-3 pt-2 border-t border-slate-200 dark:border-slate-700">
                 <h2 className="text-xs font-semibold mb-1 text-slate-900 dark:text-[var(--text)]">
                   Deskripsi Produk
                 </h2>
                 {product.description ? (
-                  <>
-                    <div className="rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/40 p-2">
-                      <div
-                        className={`text-xs text-slate-700 dark:text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap ${
-                          showFullDesc ? "max-h-40" : "max-h-16"
-                        } overflow-y-auto`}
-                      >
-                        {product.description}
-                      </div>
+                  <div
+                    onClick={() => setShowFullDesc((v) => !v)}
+                    className="rounded-md border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/40 p-2 cursor-pointer"
+                  >
+                    <div
+                      className={`text-xs text-slate-700 dark:text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap ${
+                        showFullDesc ? "max-h-40" : "max-h-16"
+                      } overflow-y-auto`}
+                    >
+                      {product.description}
                     </div>
-                    {product.description.length > 80 && (
-                      <button
-                        type="button"
-                        onClick={() => setShowFullDesc((v) => !v)}
-                        className="mt-1 text-[11px] text-primary hover:underline"
-                      >
-                        {showFullDesc
-                          ? "Tutup deskripsi"
-                          : "Selengkapnya (scroll)"}
-                      </button>
-                    )}
-                  </>
+                  </div>
                 ) : (
                   <p className="text-xs text-slate-500 dark:text-[var(--text-secondary)]">
                     Belum ada deskripsi yang ditambahkan.
@@ -522,14 +565,14 @@ export default function ProductDetailPage() {
             <section className="card">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-sm font-semibold text-slate-900 dark:text-[var(--text)]">
-                  Ulasan & Rating
+                  Ulasan & Komentar
                 </h2>
                 <span className="text-[11px] text-slate-500 dark:text-[var(--text-secondary)]">
                   Rating:{" "}
                   <span className="font-semibold">
                     {formatCount(likeCount)}
                   </span>{" "}
-                  love | Komentar:{" "}
+                  | Komentar:{" "}
                   <span className="font-semibold">
                     {comments.length}
                   </span>
@@ -571,7 +614,7 @@ export default function ProductDetailPage() {
                 </button>
               </form>
 
-              {/* LIST KOMENTAR */}
+              {/* LIST KOMENTAR – default sedikit, sisanya di-toggle */}
               <div className="border border-slate-200 dark:border-slate-600 rounded-lg p-3 bg-slate-50/60 dark:bg-slate-800/40">
                 {comments.length === 0 ? (
                   <p className="text-[11px] text-slate-500 dark:text-[var(--text-secondary)]">
