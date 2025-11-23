@@ -322,7 +322,7 @@ export default function Home() {
           <div className="absolute right-0 top-0 h-full w-64 bg-white dark:bg-card-dark shadow-xl p-4 flex flex-col gap-3">
             {userDoc ? (
               <div className="flex flex-col gap-2 text-xs text-slate-800 dark:text-[var(--text)]">
-                {/* BARIS ATAS: FOTO + GARIS + NAMA / SALDO / AKUN: ROLE */}
+                {/* BARIS ATAS: FOTO + GARIS + NAMA / SALDO / AKUN + TANGGAL */}
                 <div className="flex items-start">
                   {/* avatar + garis vertikal */}
                   <div className="relative pr-3 mr-3">
@@ -344,45 +344,43 @@ export default function Home() {
                     <span className="pointer-events-none absolute right-0 top-0 bottom-0 w-px bg-slate-200 dark:bg-slate-700" />
                   </div>
 
-                  {/* teks kanan: nama, saldo, akun: role */}
+                  {/* teks kanan: nama, saldo, akun + tanggal */}
                   <div className="flex-1 space-y-1 min-w-0">
-                    {/* nama */}
+                    {/* Nama */}
                     <div className="flex items-center gap-2">
                       <span className="font-semibold flex-1 min-w-0 block truncate">
                         {userDoc.username}
                       </span>
                     </div>
 
-                    {/* saldo & akun: role */}
-                    <div className="flex flex-col gap-0.5">
-                      <span className="block text-[11px] whitespace-nowrap overflow-hidden text-ellipsis">
-                        Saldo:{" "}
-                        <span className="font-semibold">
-                          Rp {Number(userDoc.saldo || 0).toLocaleString("id-ID")}
-                        </span>
+                    {/* Saldo */}
+                    <span className="block text-[11px] whitespace-nowrap overflow-hidden text-ellipsis">
+                      Saldo:{" "}
+                      <span className="font-semibold">
+                        Rp {Number(userDoc.saldo || 0).toLocaleString("id-ID")}
                       </span>
-                      <span className="text-[11px] text-slate-600 dark:text-[var(--text-secondary)]">
+                    </span>
+
+                    {/* Akun + tanggal daftar, sebaris, pakai "|" */}
+                    <div className="flex items-center gap-1 text-[11px] text-slate-600 dark:text-[var(--text-secondary)] whitespace-nowrap">
+                      <span>
                         Akun:{" "}
                         <span className="font-semibold">
                           {userDoc.role || "-"}
-                        </span>
+                        </span>{" "}
+                        | {createdDate}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* UID + tgl daftar di kanan */}
-                <div className="mt-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-1.5 flex items-center justify-between gap-1.5">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="text-[10px] text-slate-500 dark:text-[var(--text-secondary)]">
-                      UID:
-                    </span>
-                    <span className="text-[10px] font-mono truncate">
-                      {userDoc.uid}
-                    </span>
-                  </div>
-                  <span className="text-[10px] text-slate-500 dark:text-[var(--text-secondary)] whitespace-nowrap">
-                    {createdDate}
+                {/* UID (tanpa tanggal) */}
+                <div className="mt-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-1.5 flex items-center gap-1.5">
+                  <span className="text-[10px] text-slate-500 dark:text-[var(--text-secondary)]">
+                    UID:
+                  </span>
+                  <span className="text-[10px] font-mono truncate">
+                    {userDoc.uid}
                   </span>
                 </div>
 
