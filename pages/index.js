@@ -20,6 +20,7 @@ import {
   FiSearch,
   FiChevronLeft,
   FiChevronRight,
+  FiShoppingCart, // <- tambah icon cart
 } from "react-icons/fi";
 
 // DATA SLIDER – bebas kamu ganti imageUrl + teks + url
@@ -148,7 +149,9 @@ export default function Home() {
         const sortedByLikes = [...data].sort(
           (a, b) => Number(b.likes || 0) - Number(a.likes || 0)
         );
-        const top3 = sortedByLikes.filter((p) => Number(p.likes || 0) > 0).slice(0, 3);
+        const top3 = sortedByLikes
+          .filter((p) => Number(p.likes || 0) > 0)
+          .slice(0, 3);
         setPopularIds(top3.map((p) => p.id));
 
         setProducts(data);
@@ -285,6 +288,7 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Dark / light */}
             <button
               onClick={toggleTheme}
               className="h-9 w-9 flex items-center justify-center rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-card-dark"
@@ -297,6 +301,18 @@ export default function Home() {
               )}
             </button>
 
+            {/* Cart: hanya muncul jika sudah login */}
+            {currentUser && (
+              <Link
+                href="/cart"
+                className="h-9 w-9 flex items-center justify-center rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-card-dark"
+                aria-label="Keranjang"
+              >
+                <FiShoppingCart className="text-slate-700 dark:text-[var(--text)]" />
+              </Link>
+            )}
+
+            {/* Menu */}
             <button
               onClick={() => setMenuOpen(true)}
               className="h-9 w-9 flex items-center justify-center rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-card-dark"
@@ -634,11 +650,11 @@ export default function Home() {
                   : null;
 
                 return (
-  <Link
-    key={p.id}
-    href={`/${p.id}`} // langsung pakai id, cocok dengan pages/[id].js
-    className="rounded-xl bg-white dark:bg-card-dark shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden hover:-translate-y-1 hover:shadow-lg transition-all"
-  >
+                  <Link
+                    key={p.id}
+                    href={`/${p.id}`} // langsung pakai id, cocok dengan pages/[id].js
+                    className="rounded-xl bg-white dark:bg-card-dark shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden hover:-translate-y-1 hover:shadow-lg transition-all"
+                  >
                     {/* IMAGE + LABEL ATAS */}
                     <div className="relative w-full aspect-[4/3] bg-slate-200 dark:bg-slate-700 overflow-hidden">
                       {mainImage ? (
