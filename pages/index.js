@@ -20,7 +20,7 @@ import {
   FiSearch,
   FiChevronLeft,
   FiChevronRight,
-  FiShoppingCart, // <- tambah icon cart
+  FiShoppingCart, // icon cart
 } from "react-icons/fi";
 
 // DATA SLIDER – bebas kamu ganti imageUrl + teks + url
@@ -79,6 +79,9 @@ export default function Home() {
 
   // id produk top-3 likes (untuk label & filter populer)
   const [popularIds, setPopularIds] = useState([]);
+
+  // jumlah item di cart
+  const [cartCount, setCartCount] = useState(0);
 
   const filterLabel = {
     semua: "Terbaru",
@@ -171,7 +174,10 @@ export default function Home() {
       setUserDoc(null);
       setShowAvatarInput(false);
 
-      if (!user) return;
+      if (!user) {
+        setCartCount(0);
+        return;
+      }
 
       try {
         const snap = await getDoc(doc(db, "users", user.uid));
@@ -186,6 +192,29 @@ export default function Home() {
     });
     return () => unsub();
   }, []);
+
+  // LOAD JUMLAH CART SAAT USER BERUBAH
+  useEffect(() => {
+    const loadCartCount = async () => {
+      if (!currentUser) {
+        setCartCount(0);
+        return;
+      }
+      try {
+        const cartRef = collection(db, "users", currentUser.uid, "cart");
+        const snap = await getDocs(cartRef);
+        let total = 0;
+        snap.docs.forEach((d) => {
+          const data = d.data();
+          total += Number(data.qty || 1); // sama kaya di cart page
+        });
+        setCartCount(total);
+      } catch (err) {
+        console.error("Gagal load cart count:", err);
+      }
+    };
+    loadCartCount();
+  }, [currentUser]);
 
   const dashboardPath =
     userDoc?.role === "admins" ? "/dasboradmins" : "/dasborUser";
@@ -210,6 +239,7 @@ export default function Home() {
     try {
       await signOut(auth);
       setMenuOpen(false);
+      setCartCount(0);
     } catch (err) {
       console.error(err);
     }
@@ -305,10 +335,15 @@ export default function Home() {
             {currentUser && (
               <Link
                 href="/cart"
-                className="h-9 w-9 flex items-center justify-center rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-card-dark"
+                className="relative h-9 w-9 flex items-center justify-center rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-card-dark"
                 aria-label="Keranjang"
               >
                 <FiShoppingCart className="text-slate-700 dark:text-[var(--text)]" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-[10px] text-white flex items-center justify-center">
+                    {cartCount > 99 ? "99+" : cartCount}
+                  </span>
+                )}
               </Link>
             )}
 
