@@ -321,9 +321,10 @@ export default function Home() {
 
           <div className="absolute right-0 top-0 h-full w-64 bg-white dark:bg-card-dark shadow-xl p-4 flex flex-col gap-3">
             {userDoc ? (
-              <div className="flex flex-col gap-1.5 text-xs text-slate-800 dark:text-[var(--text)]">
-                {/* baris foto + info singkat */}
+              <div className="flex flex-col gap-2 text-xs text-slate-800 dark:text-[var(--text)]">
+                {/* BARIS ATAS: FOTO + NAMA + TGL/ROLE */}
                 <div className="flex items-start gap-3">
+                  {/* foto profil (klik untuk toggle kolom URL) */}
                   <button
                     type="button"
                     onClick={() => setShowAvatarInput((v) => !v)}
@@ -339,61 +340,63 @@ export default function Home() {
                     )}
                   </button>
 
-                  <div className="flex-1 space-y-0.5">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-semibold truncate">
+                  <div className="flex-1 space-y-1">
+                    {/* nama di kiri, tgl|role di pojok kanan */}
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="font-semibold truncate max-w-[120px]">
                         {userDoc.username}
                       </span>
-                      <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-[10px] font-medium">
-                        {userDoc.role || "-"}
-                      </span>
+                      <div className="flex flex-col items-end gap-0.5">
+                        <span className="text-[10px] text-slate-500 dark:text-[var(--text-secondary)]">
+                          {createdDate}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-[10px] font-medium whitespace-nowrap">
+                          {userDoc.role || "-"}
+                        </span>
+                      </div>
                     </div>
 
+                    {/* saldo, dibuat truncate juga */}
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-[11px]">
+                      <span className="text-[11px] truncate max-w-[160px]">
                         Saldo:{" "}
                         <span className="font-semibold">
                           Rp{" "}
                           {Number(userDoc.saldo || 0).toLocaleString("id-ID")}
                         </span>
                       </span>
-                      <span className="text-[10px] text-slate-500 dark:text-[var(--text-secondary)]">
-                        {createdDate}
-                      </span>
                     </div>
-
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-[10px] text-slate-500 dark:text-[var(--text-secondary)]">
-                        UID
-                      </span>
-                      <span className="text-[10px] font-mono truncate max-w-[120px]">
-                        {userDoc.uid}
-                      </span>
-                    </div>
-
-                    {/* kolom URL foto muncul tepat di bawah UID */}
-                    {showAvatarInput && (
-                      <div className="mt-1 space-y-1">
-                        <label className="text-[10px] text-slate-600 dark:text-[var(--text-secondary)]">
-                          URL foto profil
-                        </label>
-                        <input
-                          className="input text-[11px]"
-                          placeholder="https://..."
-                          value={avatarInput}
-                          onChange={(e) => setAvatarInput(e.target.value)}
-                        />
-                        <button
-                          onClick={handleSaveAvatar}
-                          disabled={savingAvatar}
-                          className="btn-primary w-full text-[11px] mt-1"
-                        >
-                          {savingAvatar ? "Menyimpan..." : "Simpan"}
-                        </button>
-                      </div>
-                    )}
                   </div>
                 </div>
+
+                {/* UID CARD */}
+                <div className="mt-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-1.5 flex items-center justify-between gap-2">
+                  <span className="text-[10px] text-slate-500 dark:text-[var(--text-secondary)]">
+                    UID
+                  </span>
+                  <span className="text-[10px] font-mono truncate max-w-[140px]">
+                    {userDoc.uid}
+                  </span>
+                </div>
+
+                {/* KOLOM URL FOTO + BUTTON (sebaris, mini) */}
+                {showAvatarInput && (
+                  <div className="mt-2 flex items-center gap-2">
+                    <input
+                      className="input text-[11px] h-8 px-2 py-1 flex-1"
+                      placeholder="URL foto profil"
+                      value={avatarInput}
+                      onChange={(e) => setAvatarInput(e.target.value)}
+                    />
+                    <button
+                      onClick={handleSaveAvatar}
+                      disabled={savingAvatar}
+                      className="h-8 px-3 rounded-lg bg-primary text-white text-[11px] font-medium disabled:opacity-60 whitespace-nowrap"
+                    >
+                      {savingAvatar ? "Save..." : "Save"}
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <p className="text-xs text-slate-500 dark:text-[var(--text-secondary)]">
@@ -636,7 +639,7 @@ export default function Home() {
                 const prettyUrl = `/katalog/${slug}`;
 
                 const hrefInternal = {
-                  pathname: "/[id]", // pages/[id].js
+                  pathname: "/[id]",
                   query: { id: p.id },
                 };
 
@@ -647,7 +650,6 @@ export default function Home() {
                     as={prettyUrl}
                     className="rounded-xl bg-white dark:bg-card-dark shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden hover:-translate-y-1 hover:shadow-lg transition-all"
                   >
-                    {/* IMAGE + LABEL ATAS */}
                     <div className="relative w-full aspect-[4/3] bg-slate-200 dark:bg-slate-700 overflow-hidden">
                       {mainImage ? (
                         <img
@@ -674,7 +676,6 @@ export default function Home() {
                       )}
                     </div>
 
-                    {/* CONTENT */}
                     <div className="mt-2 px-3 pb-3 flex flex-col gap-1 flex-1">
                       <h3 className="font-semibold text-sm text-slate-900 dark:text-[var(--text)] truncate">
                         {p.name}
