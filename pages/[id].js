@@ -212,7 +212,7 @@ export default function ProductDetailPage() {
       try {
         const cartRef = collection(db, "users", currentUser.uid, "cart");
         const snap = await getDocs(cartRef);
-        setCartCount(snap.size);
+        setCartCount(snap.size); // jumlah doc = jumlah produk berbeda
       } catch (err) {
         console.error("Gagal load cart user:", err);
       }
@@ -376,7 +376,7 @@ export default function ProductDetailPage() {
     if (!product || !id) return;
     if (!currentUser) return; // wajib login
     if (stock <= 0) return;
-    if (cartBusy || cartAdded) return; // hanya sekali per akun
+    if (cartBusy || cartAdded) return; // hanya sekali per akun per produk
 
     setCartBusy(true);
 
@@ -391,7 +391,7 @@ export default function ProductDetailPage() {
       });
 
       setCartAdded(true);
-      setCartCount((c) => c + 1); // update angka cart atas (1 per produk)
+      setCartCount((c) => c + 1); // nambah 1 produk di badge
     } catch (err) {
       console.error("Gagal tambah ke keranjang:", err);
     } finally {
@@ -401,12 +401,10 @@ export default function ProductDetailPage() {
 
   const handleBuyNow = () => {
     if (!product || !id) return;
-    if (!currentUser) return; // kalau mau bisa arahkan ke login dulu
+    if (!currentUser) return;
     if (stock <= 0) return;
 
-    // TODO: arahkan ke halaman checkout sesuai kebutuhan kamu
-    // contoh:
-    // router.push(`/checkout?productId=${id}`);
+    // TODO: arahkan ke halaman checkout sesuai kebutuhan
     console.log("Beli sekarang:", id);
   };
 
