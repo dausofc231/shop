@@ -632,9 +632,10 @@ export default function Home() {
                   : null;
 
                 return (
-                  <div
+                  <Link
                     key={p.id}
-                    className="rounded-2xl bg-white dark:bg-card-dark shadow-sm border border-slate-200/60 dark:border-slate-700 flex flex-col overflow-hidden"
+                    href={`/${p.id}`}
+                    className="rounded-2xl bg-white dark:bg-card-dark shadow-sm border border-slate-200/60 dark:border-slate-700 flex flex-col overflow-hidden hover:-translate-y-1 hover:shadow-md transition-transform"
                   >
                     {/* IMAGE + LABEL ATAS */}
                     <div className="relative w-full aspect-[4/3] bg-slate-200 dark:bg-slate-700 overflow-hidden">
@@ -682,7 +683,7 @@ export default function Home() {
                         </p>
                       )}
                     </div>
-                  </div>
+                  </Link>
                 );
               })}
             </div>
