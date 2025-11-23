@@ -116,9 +116,7 @@ export default function CartPage() {
       await updateDoc(ref, { qty: newQty });
 
       setItems((prev) =>
-        prev.map((it) =>
-          it.id === itemId ? { ...it, qty: newQty } : it
-        )
+        prev.map((it) => (it.id === itemId ? { ...it, qty: newQty } : it))
       );
     } catch (err) {
       console.error("Gagal ubah qty:", err);
@@ -134,14 +132,12 @@ export default function CartPage() {
 
   const handleCheckout = () => {
     if (!currentUser || items.length === 0) return;
-    // TODO: arahkan ke halaman checkout sesuai kebutuhan kamu
     console.log("Checkout dengan item:", items);
   };
 
-  const totalItem = items.reduce(
-    (acc, it) => acc + Number(it.qty || 1),
-    0
-  );
+  const totalItem = items.reduce((acc, it) => acc + Number(it.qty || 1), 0);
+
+  const useSlider = items.length > 5; // <--- KONDISI SLIDER
 
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-bg-dark text-slate-900 dark:text-[var(--text)] text-sm">
@@ -183,9 +179,7 @@ export default function CartPage() {
       <main className="max-w-5xl mx-auto px-4 py-6 pb-20">
         {!currentUser ? (
           <div className="card text-center py-8">
-            <p className="text-sm font-semibold mb-1">
-              Kamu belum login
-            </p>
+            <p className="text-sm font-semibold mb-1">Kamu belum login</p>
             <p className="text-xs text-slate-500 dark:text-[var(--text-secondary)] mb-3">
               Silakan login terlebih dahulu untuk melihat keranjang belanja.
             </p>
@@ -216,7 +210,15 @@ export default function CartPage() {
               <h1 className="text-sm font-semibold text-slate-900 dark:text-[var(--text)] mb-1">
                 Keranjang Belanja
               </h1>
-              <div className="space-y-2">
+
+              {/* WRAPPER YANG JADI SLIDER KALAU > 5 ITEM */}
+              <div
+                className={`space-y-2 ${
+                  useSlider
+                    ? "max-h-80 overflow-y-auto pr-1" // tinggi bisa diatur sesuai selera
+                    : ""
+                }`}
+              >
                 {items.map((item) => {
                   const qty = Number(item.qty || 1);
                   const isNameExpanded = !!expandedNames[item.id];
@@ -227,7 +229,7 @@ export default function CartPage() {
                       key={item.id}
                       className="flex gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 p-2 items-stretch"
                     >
-                      {/* KIRI: IMAGE + LINK (dekat, nggak kejauhan) */}
+                      {/* KIRI: IMAGE + LINK */}
                       <div className="flex flex-col items-center gap-1 w-20">
                         <div className="h-16 w-16 rounded-md overflow-hidden bg-slate-200 dark:bg-slate-700 flex-shrink-0">
                           {item.image ? (
@@ -255,7 +257,9 @@ export default function CartPage() {
                           {/* NAMA */}
                           <p
                             className={`text-[12px] font-semibold text-slate-900 dark:text-[var(--text)] cursor-pointer break-words ${
-                              isNameExpanded ? "line-clamp-none" : "line-clamp-1"
+                              isNameExpanded
+                                ? "line-clamp-none"
+                                : "line-clamp-1"
                             }`}
                             title={item.name}
                             onClick={() =>
@@ -293,8 +297,12 @@ export default function CartPage() {
                           <div className="inline-flex items-center gap-1">
                             <button
                               type="button"
-                              onClick={() => handleChangeQty(item.id, -1)}
-                              disabled={qty <= 1 || !!changingQty[item.id]}
+                              onClick={() =>
+                                handleChangeQty(item.id, -1)
+                              }
+                              disabled={
+                                qty <= 1 || !!changingQty[item.id]
+                              }
                               className="h-6 w-6 flex items-center justify-center rounded-full border border-slate-300 dark:border-slate-500 bg-white dark:bg-slate-900 text-[12px] disabled:opacity-50"
                             >
                               -
@@ -304,7 +312,9 @@ export default function CartPage() {
                             </span>
                             <button
                               type="button"
-                              onClick={() => handleChangeQty(item.id, 1)}
+                              onClick={() =>
+                                handleChangeQty(item.id, 1)
+                              }
                               disabled={!!changingQty[item.id]}
                               className="h-6 w-6 flex items-center justify-center rounded-full border border-slate-300 dark:border-slate-500 bg-white dark:bg-slate-900 text-[12px] disabled:opacity-50"
                             >
