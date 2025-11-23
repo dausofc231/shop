@@ -631,11 +631,28 @@ export default function Home() {
                     : null
                   : null;
 
+                // buat URL cantik berdasarkan nama produk (tanpa simpan slug di DB)
+                const rawName = (p.name || "produk")
+                  .toString()
+                  .toLowerCase()
+                  .trim();
+                const slug =
+                  rawName
+                    .replace(/[^a-z0-9]+/gi, "-")
+                    .replace(/(^-|-$)/g, "") || "produk";
+                const prettyUrl = `/katalog/${slug}`;
+
+                const hrefInternal = {
+                  pathname: "/[id]", // pages/[id].js
+                  query: { id: p.id },
+                };
+
                 return (
                   <Link
                     key={p.id}
-                    href={`/${p.id}`}
-                    className="rounded-2xl bg-white dark:bg-card-dark shadow-sm border border-slate-200/60 dark:border-slate-700 flex flex-col overflow-hidden hover:-translate-y-1 hover:shadow-md transition-transform"
+                    href={hrefInternal}
+                    as={prettyUrl}
+                    className="rounded-xl bg-white dark:bg-card-dark shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden hover:-translate-y-1 hover:shadow-lg transition-all"
                   >
                     {/* IMAGE + LABEL ATAS */}
                     <div className="relative w-full aspect-[4/3] bg-slate-200 dark:bg-slate-700 overflow-hidden">
@@ -660,25 +677,23 @@ export default function Home() {
 
                     {/* BAR DISKON */}
                     {hasDiscount && (
-                      <div className="mt-2 mx-2 mb-1 px-3 py-1 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/40 text-[11px] font-medium text-red-600 dark:text-red-300">
+                      <div className="mt-1 mx-3 px-3 py-1 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/40 text-[11px] font-medium text-red-600 dark:text-red-300">
                         Diskon {discountPercent}%
                       </div>
                     )}
 
                     {/* CONTENT */}
-                    <div className="mt-2 px-2 pb-3 flex flex-col gap-1 flex-1">
+                    <div className="mt-2 px-3 pb-3 flex flex-col gap-1 flex-1">
                       <h3 className="font-semibold text-sm text-slate-900 dark:text-[var(--text)] truncate">
                         {p.name}
                       </h3>
 
-                      <div className="text-xs">
-                        <span className="font-semibold text-primary">
-                          Rp {finalPrice.toLocaleString("id-ID")}
-                        </span>
-                      </div>
+                      <span className="text-xs font-semibold text-primary">
+                        Rp {finalPrice.toLocaleString("id-ID")}
+                      </span>
 
                       {p.description && (
-                        <p className="text-xs text-slate-600 dark:text-[var(--text-secondary)] line-clamp-2 overflow-hidden">
+                        <p className="text-[11px] text-slate-600 dark:text-[var(--text-secondary)] line-clamp-2 overflow-hidden">
                           {p.description}
                         </p>
                       )}
