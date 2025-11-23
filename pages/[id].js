@@ -121,7 +121,6 @@ export default function ProductDetailPage() {
         if (snap.exists()) {
           const data = snap.data();
           setUserProfile(data);
-          // kalau kolom nama komentar masih kosong, isi dari username
           if (!commentName) {
             setCommentName(data.username || "");
           }
@@ -305,7 +304,6 @@ export default function ProductDetailPage() {
       setCommentText("");
     } catch (err) {
       console.error("Gagal mengirim komentar:", err);
-      alert("Gagal mengirim komentar. Cek koneksi / aturan akses (login) kamu.");
     } finally {
       setSavingComment(false);
     }
@@ -391,9 +389,9 @@ export default function ProductDetailPage() {
         ) : (
           <div className="space-y-4 md:space-y-5">
             {/* CARD UTAMA */}
-            <section className="card flex flex-col gap-3">
+            <section className="card flex flex-col gap-3 p-3 sm:p-4">
               {/* IMAGE + VARIASI */}
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col gap-1.5">
                 {/* IMAGE BESAR (slider geser) */}
                 <div
                   className="relative w-full aspect-[4/3] bg-slate-200 dark:bg-slate-700 rounded-xl overflow-hidden"
@@ -446,19 +444,19 @@ export default function ProductDetailPage() {
                   )}
                 </div>
 
-                {/* TERJUAL | STOK (lapisan kecil) */}
-                <div className="flex gap-2 text-[11px] px-0.5">
-                  <div className="flex-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-1 flex items-center justify-between">
+                {/* TERJUAL | STOK (lebih dekat + ada :) */}
+                <div className="flex gap-1.5 text-[11px] px-0.5 mt-1">
+                  <div className="flex-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-0.5 flex items-center justify-between">
                     <span className="text-slate-500 dark:text-[var(--text-secondary)]">
-                      Terjual
+                      Terjual:
                     </span>
                     <span className="font-semibold text-slate-800 dark:text-[var(--text)]">
                       {formatCount(sold)}
                     </span>
                   </div>
-                  <div className="flex-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-1 flex items-center justify-between">
+                  <div className="flex-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-0.5 flex items-center justify-between">
                     <span className="text-slate-500 dark:text-[var(--text-secondary)]">
-                      Stok
+                      Stok:
                     </span>
                     <span className="font-semibold text-slate-800 dark:text-[var(--text)]">
                       {formatCount(stock)}
@@ -468,7 +466,7 @@ export default function ProductDetailPage() {
 
                 {/* THUMBNAILS */}
                 {images.length > 1 && (
-                  <div className="flex gap-2 overflow-x-auto pb-1">
+                  <div className="flex gap-2 overflow-x-auto pb-1 px-0.5">
                     {images.map((img, idx) => (
                       <button
                         key={img + idx}
@@ -491,8 +489,8 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              {/* TITLE + HARGA */}
-              <div className="pt-2 border-t border-slate-200 dark:border-slate-700 space-y-1 px-0.5">
+              {/* TITLE + HARGA (lebih rapat) */}
+              <div className="pt-1.5 border-t border-slate-200 dark:border-slate-700 space-y-1 px-0.5">
                 <h1
                   className={`text-base sm:text-lg font-semibold text-slate-900 dark:text-[var(--text)] break-words ${
                     showFullTitle ? "" : "line-clamp-1"
@@ -503,15 +501,15 @@ export default function ProductDetailPage() {
                   {product.name}
                 </h1>
 
-                <div className="border-t border-slate-200 dark:border-slate-700 my-1" />
+                <div className="border-t border-slate-200 dark:border-slate-700 mt-0.5 mb-0.5" />
 
-                <div className="flex flex-col gap-0.5">
+                <div className="flex flex-col gap-0.25">
                   <div className="flex items-baseline gap-1">
-                    <span className="font-semibold text-primary text-sm">
+                    <span className="font-semibold text-primary text-[13px]">
                       Rp {finalPrice.toLocaleString("id-ID")}
                     </span>
                     {hasDiscount && (
-                      <span className="text-[11px] font-semibold text-red-500">
+                      <span className="text-[10px] font-semibold text-red-500">
                         -{discountPercent}%
                       </span>
                     )}
@@ -525,7 +523,7 @@ export default function ProductDetailPage() {
                 </div>
               </div>
 
-              {/* DESKRIPSI (collapsible + scroll) */}
+              {/* DESKRIPSI */}
               <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-700 px-0.5">
                 <h2 className="text-xs font-semibold mb-1 text-slate-900 dark:text-[var(--text)]">
                   Deskripsi Produk
@@ -548,7 +546,7 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              {/* KATEGORI (slider horizontal 1 baris) */}
+              {/* KATEGORI */}
               {Array.isArray(product.categories) &&
                 product.categories.length > 0 && (
                   <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-700 px-0.5">
@@ -602,7 +600,6 @@ export default function ProductDetailPage() {
                 </div>
               </div>
 
-              {/* INFO JIKA BELUM LOGIN */}
               {!currentUser && (
                 <div className="mb-4 mx-0.5 flex items-start gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2">
                   <FiEyeOff className="mt-0.5 text-slate-500 dark:text-[var(--text-secondary)] text-sm" />
@@ -613,7 +610,6 @@ export default function ProductDetailPage() {
                 </div>
               )}
 
-              {/* FORM KOMENTAR (HANYA JIKA LOGIN) */}
               {currentUser && (
                 <form
                   onSubmit={handleSubmitComment}
@@ -657,7 +653,6 @@ export default function ProductDetailPage() {
                 </form>
               )}
 
-              {/* LIST KOMENTAR */}
               <div className="border border-slate-200 dark:border-slate-600 rounded-lg p-3 bg-slate-50/60 dark:bg-slate-800/40 mx-0.5">
                 {comments.length === 0 ? (
                   <p className="text-[11px] text-slate-500 dark:text-[var(--text-secondary)]">
