@@ -77,6 +77,9 @@ export default function Home() {
   const [selectedFilter, setSelectedFilter] = useState("semua");
   const [filterOpen, setFilterOpen] = useState(false);
 
+  // id produk top-3 likes (untuk label & filter populer)
+  const [popularIds, setPopularIds] = useState([]);
+
   const filterLabel = {
     semua: "Terbaru",
     diskon: "Diskon",
@@ -136,7 +139,19 @@ export default function Home() {
       try {
         const q = query(collection(db, "products"), orderBy("createdAt", "desc"));
         const snapshot = await getDocs(q);
-        const data = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+        const data = snapshot.docs.map((d) => {
+          const raw = d.data();
+          const likes = typeof raw.likes === "number" ? raw.likes : 0;
+          return { id: d.id, ...raw, likes };
+        });
+
+        // tentukan 3 produk dengan like terbanyak (>0)
+        const sortedByLikes = [...data].sort(
+          (a, b) => Number(b.likes || 0) - Number(a.likes || 0)
+        );
+        const top3 = sortedByLikes.filter((p) => Number(p.likes || 0) > 0).slice(0, 3);
+        setPopularIds(top3.map((p) => p.id));
+
         setProducts(data);
       } catch (err) {
         console.error(err);
@@ -210,6 +225,31 @@ export default function Home() {
     }
   })();
 
+  /* HELPER LABEL POPULER / BARU */
+  const isPopular = (p) => popularIds.includes(p.id);
+
+  const isNew = (p) => {
+    // kalau populer, jangan ditandai baru
+    if (isPopular(p)) return false;
+
+    // kalau di labels ada "baru"
+    if (Array.isArray(p.labels) && p.labels.includes("baru")) return true;
+
+    // cek createdAt <= 7 hari
+    try {
+      if (p.createdAt && typeof p.createdAt.toDate === "function") {
+        const created = p.createdAt.toDate();
+        const now = new Date();
+        const diffMs = now - created;
+        const diffDay = diffMs / (1000 * 60 * 60 * 24);
+        return diffDay <= 7;
+      }
+    } catch {
+      // ignore
+    }
+    return false;
+  };
+
   /* FILTER & SEARCH PRODUK */
   let filteredProducts = products.filter((p) => {
     const term = searchTerm.trim().toLowerCase();
@@ -228,12 +268,7 @@ export default function Home() {
       return hasDiscountNumber || hasDiscountLabel;
     });
   } else if (selectedFilter === "populer") {
-    filteredProducts = filteredProducts.filter((p) => {
-      const fromFlag = p.popular === true;
-      const fromLabel =
-        Array.isArray(p.labels) && p.labels.includes("populer");
-      return fromFlag || fromLabel;
-    });
+    filteredProducts = filteredProducts.filter((p) => isPopular(p));
   }
 
   if (selectedFilter === "termurah") {
@@ -623,12 +658,13 @@ export default function Home() {
                   ? Math.round((basePrice * (100 - discountPercent)) / 100)
                   : basePrice;
 
-                const topLabel = Array.isArray(p.labels)
-                  ? p.labels.includes("populer")
-                    ? "Populer"
-                    : p.labels.includes("baru")
-                    ? "Baru"
-                    : null
+                const productIsPopular = isPopular(p);
+                const productIsNew = isNew(p);
+
+                const topLabel = productIsPopular
+                  ? "Populer"
+                  : productIsNew
+                  ? "Baru"
                   : null;
 
                 // buat URL cantik berdasarkan nama produk (tanpa simpan slug di DB)
@@ -668,6 +704,12 @@ export default function Home() {
                         </div>
                       )}
 
+                      {hasDiscount && (
+                        <span className="absolute top-2 left-2 px-2 py-1 rounded-full bg-red-500 text-[10px] font-semibold text-white shadow-sm">
+                          -{discountPercent}%
+                        </span>
+                      )}
+
                       {topLabel && (
                         <span className="absolute top-2 right-2 px-2 py-1 rounded-full bg-primary/90 text-[10px] font-semibold text-white shadow-sm">
                           {topLabel}
@@ -675,25 +717,18 @@ export default function Home() {
                       )}
                     </div>
 
-                    {/* BAR DISKON */}
-                    {hasDiscount && (
-                      <div className="mt-1 mx-3 px-3 py-1 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/40 text-[11px] font-medium text-red-600 dark:text-red-300">
-                        Diskon {discountPercent}%
-                      </div>
-                    )}
-
                     {/* CONTENT */}
                     <div className="mt-2 px-3 pb-3 flex flex-col gap-1 flex-1">
                       <h3 className="font-semibold text-sm text-slate-900 dark:text-[var(--text)] truncate">
                         {p.name}
                       </h3>
 
-                      <span className="text-xs font-semibold text-primary">
+                      <span className="text-xs font-semibold text-primary whitespace-nowrap overflow-hidden text-ellipsis">
                         Rp {finalPrice.toLocaleString("id-ID")}
                       </span>
 
                       {p.description && (
-                        <p className="text-[11px] text-slate-600 dark:text-[var(--text-secondary)] line-clamp-2 overflow-hidden">
+                        <p className="text-[11px] text-slate-600 dark:text-[var(--text-secondary)] line-clamp-2 overflow-hidden whitespace-pre-line break-words">
                           {p.description}
                         </p>
                       )}
