@@ -109,7 +109,7 @@ export default function Home() {
   useEffect(() => {
     const id = setInterval(() => {
       setActiveSlide((prev) => (prev + 1) % sliderData.length);
-    }, 5000);
+    }, 5000); // 5 detik
     return () => clearInterval(id);
   }, []);
 
@@ -322,64 +322,67 @@ export default function Home() {
           <div className="absolute right-0 top-0 h-full w-64 bg-white dark:bg-card-dark shadow-xl p-4 flex flex-col gap-3">
             {userDoc ? (
               <div className="flex flex-col gap-2 text-xs text-slate-800 dark:text-[var(--text)]">
-                {/* BARIS ATAS: FOTO + NAMA + TGL/ROLE */}
-                <div className="flex items-start gap-3">
-                  {/* foto profil (klik untuk toggle kolom URL) */}
-                  <button
-                    type="button"
-                    onClick={() => setShowAvatarInput((v) => !v)}
-                    className="h-10 w-10 rounded-full border border-slate-300 dark:border-slate-600 overflow-hidden bg-white dark:bg-bg-dark flex-shrink-0"
-                  >
-                    {userDoc.photoURL ? (
-                      <img
-                        src={userDoc.photoURL}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <FiUser className="text-slate-500 dark:text-[var(--text-secondary)] h-full w-full p-2" />
-                    )}
-                  </button>
+                {/* BARIS ATAS: FOTO + GARIS + NAMA / TGL / SALDO / ROLE */}
+                <div className="flex items-start">
+                  {/* avatar + garis vertikal */}
+                  <div className="relative pr-3 mr-3">
+                    <button
+                      type="button"
+                      onClick={() => setShowAvatarInput((v) => !v)}
+                      className="h-10 w-10 rounded-full border border-slate-300 dark:border-slate-600 overflow-hidden bg-white dark:bg-bg-dark flex-shrink-0"
+                    >
+                      {userDoc.photoURL ? (
+                        <img
+                          src={userDoc.photoURL}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <FiUser className="text-slate-500 dark:text-[var(--text-secondary)] h-full w-full p-2" />
+                      )}
+                    </button>
+                    {/* garis pembatas putih (coklat di dark) */}
+                    <span className="pointer-events-none absolute right-0 top-0 bottom-0 w-px bg-slate-200 dark:bg-slate-700" />
+                  </div>
 
+                  {/* teks kanan: nama, tgl, saldo, role */}
                   <div className="flex-1 space-y-1">
-                    {/* nama di kiri, tgl|role di pojok kanan */}
-                    <div className="flex items-start justify-between gap-2">
-                      <span className="font-semibold truncate max-w-[120px]">
+                    {/* nama & tanggal */}
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-semibold truncate">
                         {userDoc.username}
                       </span>
-                      <div className="flex flex-col items-end gap-0.5">
-                        <span className="text-[10px] text-slate-500 dark:text-[var(--text-secondary)]">
-                          {createdDate}
-                        </span>
-                        <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-[10px] font-medium whitespace-nowrap">
-                          {userDoc.role || "-"}
-                        </span>
-                      </div>
+                      <span className="text-[10px] text-slate-500 dark:text-[var(--text-secondary)] whitespace-nowrap">
+                        {createdDate}
+                      </span>
                     </div>
 
-                    {/* saldo, dibuat truncate juga */}
+                    {/* saldo & role */}
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-[11px] truncate max-w-[160px]">
+                      <span className="text-[11px] truncate">
                         Saldo:{" "}
                         <span className="font-semibold">
                           Rp{" "}
                           {Number(userDoc.saldo || 0).toLocaleString("id-ID")}
                         </span>
                       </span>
+                      <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-[10px] font-medium whitespace-nowrap">
+                        {userDoc.role || "-"}
+                      </span>
                     </div>
                   </div>
                 </div>
 
-                {/* UID CARD */}
-                <div className="mt-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-1.5 flex items-center justify-between gap-2">
+                {/* UID: dekat & pendek */}
+                <div className="mt-1 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2 py-1.5 flex items-center gap-1.5">
                   <span className="text-[10px] text-slate-500 dark:text-[var(--text-secondary)]">
-                    UID
+                    UID:
                   </span>
-                  <span className="text-[10px] font-mono truncate max-w-[140px]">
+                  <span className="text-[10px] font-mono truncate">
                     {userDoc.uid}
                   </span>
                 </div>
 
-                {/* KOLOM URL FOTO + BUTTON (sebaris, mini) */}
+                {/* KOLOM URL FOTO + BUTTON */}
                 {showAvatarInput && (
                   <div className="mt-2 flex items-center gap-2">
                     <input
@@ -628,6 +631,7 @@ export default function Home() {
                   ? "Baru"
                   : null;
 
+                // buat URL cantik berdasarkan nama produk (tanpa simpan slug di DB)
                 const rawName = (p.name || "produk")
                   .toString()
                   .toLowerCase()
@@ -639,7 +643,7 @@ export default function Home() {
                 const prettyUrl = `/katalog/${slug}`;
 
                 const hrefInternal = {
-                  pathname: "/[id]",
+                  pathname: "/[id]", // pages/[id].js
                   query: { id: p.id },
                 };
 
@@ -650,6 +654,7 @@ export default function Home() {
                     as={prettyUrl}
                     className="rounded-xl bg-white dark:bg-card-dark shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col overflow-hidden hover:-translate-y-1 hover:shadow-lg transition-all"
                   >
+                    {/* IMAGE + LABEL ATAS */}
                     <div className="relative w-full aspect-[4/3] bg-slate-200 dark:bg-slate-700 overflow-hidden">
                       {mainImage ? (
                         <img
@@ -663,12 +668,14 @@ export default function Home() {
                         </div>
                       )}
 
+                      {/* diskon di pojok kiri */}
                       {hasDiscount && (
                         <span className="absolute top-2 left-2 px-2 py-1 rounded-full bg-red-500 text-[10px] font-semibold text-white shadow-sm">
                           -{discountPercent}%
                         </span>
                       )}
 
+                      {/* label populer / baru di pojok kanan */}
                       {topLabel && (
                         <span className="absolute top-2 right-2 px-2 py-1 rounded-full bg-primary/90 text-[10px] font-semibold text-white shadow-sm">
                           {topLabel}
@@ -676,6 +683,7 @@ export default function Home() {
                       )}
                     </div>
 
+                    {/* CONTENT */}
                     <div className="mt-2 px-3 pb-3 flex flex-col gap-1 flex-1">
                       <h3 className="font-semibold text-sm text-slate-900 dark:text-[var(--text)] truncate">
                         {p.name}
