@@ -8,9 +8,10 @@ import {
   getDocs,
   doc,
   deleteDoc,
+  updateDoc,
 } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
-import { FiArrowLeft, FiTrash2 } from "react-icons/fi";
+import { FiArrowLeft, FiTrash2, FiSun, FiMoon } from "react-icons/fi";
 
 function formatRupiah(n) {
   const num = Number(n || 0);
@@ -26,6 +27,10 @@ export default function CartPage() {
   const [items, setItems] = useState([]);
   const [loadingItems, setLoadingItems] = useState(true);
   const [removing, setRemoving] = useState({});
+  const [changingQty, setChangingQty] = useState({});
+
+  const [expandedNames, setExpandedNames] = useState({});
+  const [expandedPrices, setExpandedPrices] = useState({});
 
   /* THEME INIT */
   useEffect(() => {
@@ -93,8 +98,37 @@ export default function CartPage() {
     }
   };
 
+  const handleChangeQty = async (itemId, delta) => {
+    if (!currentUser) return;
+
+    const item = items.find((it) => it.id === itemId);
+    if (!item) return;
+
+    const currentQty = Number(item.qty || 1);
+    const newQty = currentQty + delta;
+
+    if (newQty < 1) return; // minimal 1, kalau mau 0 bisa pakai tombol hapus
+
+    setChangingQty((prev) => ({ ...prev, [itemId]: true }));
+
+    try {
+      const ref = doc(db, "users", currentUser.uid, "cart", itemId);
+      await updateDoc(ref, { qty: newQty });
+
+      setItems((prev) =>
+        prev.map((it) =>
+          it.id === itemId ? { ...it, qty: newQty } : it
+        )
+      );
+    } catch (err) {
+      console.error("Gagal ubah qty:", err);
+    } finally {
+      setChangingQty((prev) => ({ ...prev, [itemId]: false }));
+    }
+  };
+
   const totalHarga = items.reduce(
-    (sum, it) => sum + Number(it.price || 0),
+    (sum, it) => sum + Number(it.price || 0) * Number(it.qty || 1),
     0
   );
 
@@ -132,9 +166,9 @@ export default function CartPage() {
             aria-label="Dark / light mode"
           >
             {theme === "dark" ? (
-              <span className="text-primary text-xs">☀</span>
+              <FiSun className="text-primary" />
             ) : (
-              <span className="text-slate-700 text-xs">🌙</span>
+              <FiMoon className="text-slate-700" />
             )}
           </button>
         </div>
@@ -178,49 +212,121 @@ export default function CartPage() {
                 Keranjang Belanja
               </h1>
               <div className="space-y-2">
-                {items.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 p-2"
-                  >
-                    <div className="h-16 w-16 rounded-md overflow-hidden bg-slate-200 dark:bg-slate-700 flex-shrink-0">
-                      {item.image ? (
-                        <img
-                          src={item.image}
-                          alt={item.name || "Produk"}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : null}
-                    </div>
-                    <div className="flex-1 flex flex-col justify-between">
-                      <div>
-                        <p className="text-[12px] font-semibold text-slate-900 dark:text-[var(--text)] line-clamp-2">
-                          {item.name || "Tanpa nama"}
-                        </p>
-                        <p className="text-[11px] text-primary font-semibold mt-0.5">
-                          {formatRupiah(item.price)}
-                        </p>
-                      </div>
-                      <div className="flex items-center justify-between mt-1">
+                {items.map((item) => {
+                  const qty = Number(item.qty || 1);
+                  const isNameExpanded = !!expandedNames[item.id];
+                  const isPriceExpanded = !!expandedPrices[item.id];
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="flex gap-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40 p-2 items-stretch"
+                    >
+                      {/* KIRI: IMAGE + LINK */}
+                      <div className="flex flex-col items-center justify-between w-20">
+                        <div className="h-16 w-16 rounded-md overflow-hidden bg-slate-200 dark:bg-slate-700 flex-shrink-0">
+                          {item.image ? (
+                            <img
+                              src={item.image}
+                              alt={item.name || "Produk"}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : null}
+                        </div>
                         <Link
                           href={`/${item.productId || item.id}`}
-                          className="text-[11px] text-primary hover:underline"
+                          className="mt-1 text-[11px] text-primary hover:underline text-center"
                         >
                           Lihat produk
                         </Link>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveItem(item.id)}
-                          disabled={!!removing[item.id]}
-                          className="inline-flex items-center gap-1 text-[11px] text-red-500 disabled:opacity-60"
-                        >
-                          <FiTrash2 className="text-xs" />
-                          <span>Hapus</span>
-                        </button>
+                      </div>
+
+                      {/* PEMBATAS VERTIKAL */}
+                      <div className="w-px bg-slate-200 dark:bg-slate-700 mx-1" />
+
+                      {/* KANAN: NAMA, HARGA, QTY + HAPUS */}
+                      <div className="flex-1 flex flex-col justify-between">
+                        <div>
+                          {/* NAMA (dipendekkan, expand saat diklik) */}
+                          <p
+                            className={`text-[12px] font-semibold text-slate-900 dark:text-[var(--text)] cursor-pointer break-words ${
+                              isNameExpanded ? "" : "line-clamp-1"
+                            }`}
+                            title={item.name}
+                            onClick={() =>
+                              setExpandedNames((prev) => ({
+                                ...prev,
+                                [item.id]: !prev[item.id],
+                              }))
+                            }
+                          >
+                            {item.name || "Tanpa nama"}
+                          </p>
+
+                          {/* HARGA (dipendekkan, expand saat diklik) */}
+                          <p
+                            className={`text-[11px] text-primary font-semibold mt-0.5 cursor-pointer ${
+                              isPriceExpanded
+                                ? ""
+                                : "max-w-[90%] overflow-hidden text-ellipsis whitespace-nowrap"
+                            }`}
+                            onClick={() =>
+                              setExpandedPrices((prev) => ({
+                                ...prev,
+                                [item.id]: !prev[item.id],
+                              }))
+                            }
+                            title={formatRupiah(item.price)}
+                          >
+                            {formatRupiah(item.price)}{" "}
+                            {qty > 1 && (
+                              <span className="text-[10px] text-slate-500 dark:text-[var(--text-secondary)]">
+                                (per item, qty {qty})
+                              </span>
+                            )}
+                          </p>
+                        </div>
+
+                        {/* BAWAH: QTY CONTROLS + HAPUS */}
+                        <div className="flex items-center justify-between mt-2">
+                          {/* QTY - angka + */}
+                          <div className="inline-flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleChangeQty(item.id, -1)}
+                              disabled={qty <= 1 || !!changingQty[item.id]}
+                              className="h-6 w-6 flex items-center justify-center rounded-full border border-slate-300 dark:border-slate-500 bg-white dark:bg-slate-900 text-[12px] disabled:opacity-50"
+                            >
+                              -
+                            </button>
+                            <span className="min-w-[24px] text-center text-[12px]">
+                              {qty}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleChangeQty(item.id, 1)}
+                              disabled={!!changingQty[item.id]}
+                              className="h-6 w-6 flex items-center justify-center rounded-full border border-slate-300 dark:border-slate-500 bg-white dark:bg-slate-900 text-[12px] disabled:opacity-50"
+                            >
+                              +
+                            </button>
+                          </div>
+
+                          {/* HAPUS */}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveItem(item.id)}
+                            disabled={!!removing[item.id]}
+                            className="inline-flex items-center gap-1 text-[11px] text-red-500 disabled:opacity-60"
+                          >
+                            <FiTrash2 className="text-xs" />
+                            <span>Hapus</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </section>
 
@@ -228,7 +334,7 @@ export default function CartPage() {
             <section className="card p-3 sm:p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-slate-600 dark:text-[var(--text-secondary)]">
-                  Total ({items.length} produk)
+                  Total ({items.reduce((acc, it) => acc + Number(it.qty || 1), 0)} item)
                 </span>
                 <span className="text-sm font-semibold text-slate-900 dark:text-[var(--text)]">
                   {formatRupiah(totalHarga)}

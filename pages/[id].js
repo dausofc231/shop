@@ -83,7 +83,7 @@ export default function ProductDetailPage() {
   const [expandedComments, setExpandedComments] = useState({});
 
   // CART STATE (ikon atas & tombol bawah)
-  const [cartCount, setCartCount] = useState(0); // jumlah item di cart user
+  const [cartCount, setCartCount] = useState(0); // jumlah produk berbeda di cart user
   const [cartAdded, setCartAdded] = useState(false); // apakah produk ini sudah di cart user
   const [cartBusy, setCartBusy] = useState(false);
 
@@ -212,7 +212,7 @@ export default function ProductDetailPage() {
       try {
         const cartRef = collection(db, "users", currentUser.uid, "cart");
         const snap = await getDocs(cartRef);
-        setCartCount(snap.size); // jumlah doc = jumlah produk berbeda
+        setCartCount(snap.size); // 1 per produk
       } catch (err) {
         console.error("Gagal load cart user:", err);
       }
@@ -387,6 +387,7 @@ export default function ProductDetailPage() {
         name: product.name || "",
         price: finalPrice,
         image: images[0] || "",
+        qty: 1, // default 1, nanti bisa diubah di cart
         createdAt: serverTimestamp(),
       });
 
@@ -431,7 +432,7 @@ export default function ProductDetailPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* CART ICON ATAS – hanya muncul kalau sudah login, angka mulai dari 0 */}
+            {/* CART ICON ATAS – hanya muncul kalau sudah login */}
             {currentUser && (
               <button
                 type="button"
@@ -439,10 +440,10 @@ export default function ProductDetailPage() {
                 className="relative h-8 w-8 flex items-center justify-center rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-card-dark"
                 aria-label="Lihat keranjang"
               >
-                <FiShoppingCart className="text-slate-700 dark:text-[var(--text)]" />
-                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-0.5 rounded-full bg-primary text-[10px] text-white flex items-center justify-center">
-                  {cartCount > 99 ? "99+" : cartCount}
-                </span>
+                  <FiShoppingCart className="text-slate-700 dark:text-[var(--text)]" />
+                  <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-0.5 rounded-full bg-primary text-[10px] text-white flex items-center justify-center">
+                    {cartCount > 99 ? "99+" : cartCount}
+                  </span>
               </button>
             )}
 
