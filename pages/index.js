@@ -59,7 +59,6 @@ export default function Home() {
 
   const [theme, setTheme] = useState("dark");
   const [menuOpen, setMenuOpen] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
   const [showAvatarInput, setShowAvatarInput] = useState(false);
 
   const [currentUser, setCurrentUser] = useState(null);
@@ -110,7 +109,7 @@ export default function Home() {
   useEffect(() => {
     const id = setInterval(() => {
       setActiveSlide((prev) => (prev + 1) % sliderData.length);
-    }, 5000); // 5 detik
+    }, 5000);
     return () => clearInterval(id);
   }, []);
 
@@ -167,7 +166,6 @@ export default function Home() {
     const unsub = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
       setUserDoc(null);
-      setProfileOpen(false);
       setShowAvatarInput(false);
 
       if (!user) return;
@@ -209,7 +207,6 @@ export default function Home() {
     try {
       await signOut(auth);
       setMenuOpen(false);
-      setProfileOpen(false);
     } catch (err) {
       console.error(err);
     }
@@ -229,13 +226,10 @@ export default function Home() {
   const isPopular = (p) => popularIds.includes(p.id);
 
   const isNew = (p) => {
-    // kalau populer, jangan ditandai baru
     if (isPopular(p)) return false;
 
-    // kalau di labels ada "baru"
     if (Array.isArray(p.labels) && p.labels.includes("baru")) return true;
 
-    // cek createdAt <= 7 hari
     try {
       if (p.createdAt && typeof p.createdAt.toDate === "function") {
         const created = p.createdAt.toDate();
@@ -321,37 +315,86 @@ export default function Home() {
             className="absolute inset-0 bg-black/40"
             onClick={() => {
               setMenuOpen(false);
-              setProfileOpen(false);
               setShowAvatarInput(false);
             }}
           />
 
           <div className="absolute right-0 top-0 h-full w-64 bg-white dark:bg-card-dark shadow-xl p-4 flex flex-col gap-3">
             {userDoc ? (
-              <button
-                className="flex items-center gap-3 text-left"
-                onClick={() => setProfileOpen(true)}
-              >
-                <div className="h-10 w-10 rounded-full border border-slate-300 dark:border-slate-600 overflow-hidden bg-white dark:bg-bg-dark">
-                  {userDoc.photoURL ? (
-                    <img
-                      src={userDoc.photoURL}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <FiUser className="text-slate-500 dark:text-[var(--text-secondary)] h-full w-full p-2" />
-                  )}
-                </div>
+              <div className="flex flex-col gap-1.5 text-xs text-slate-800 dark:text-[var(--text)]">
+                {/* baris foto + info singkat */}
+                <div className="flex items-start gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowAvatarInput((v) => !v)}
+                    className="h-10 w-10 rounded-full border border-slate-300 dark:border-slate-600 overflow-hidden bg-white dark:bg-bg-dark flex-shrink-0"
+                  >
+                    {userDoc.photoURL ? (
+                      <img
+                        src={userDoc.photoURL}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <FiUser className="text-slate-500 dark:text-[var(--text-secondary)] h-full w-full p-2" />
+                    )}
+                  </button>
 
-                <div>
-                  <p className="text-xs font-semibold text-slate-900 dark:text-[var(--text)]">
-                    {userDoc.username}
-                  </p>
-                  <p className="text-[11px] text-slate-500 dark:text-[var(--text-secondary)]">
-                    Saldo: Rp {Number(userDoc.saldo || 0).toLocaleString("id-ID")}
-                  </p>
+                  <div className="flex-1 space-y-0.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-semibold truncate">
+                        {userDoc.username}
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-[10px] font-medium">
+                        {userDoc.role || "-"}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[11px]">
+                        Saldo:{" "}
+                        <span className="font-semibold">
+                          Rp{" "}
+                          {Number(userDoc.saldo || 0).toLocaleString("id-ID")}
+                        </span>
+                      </span>
+                      <span className="text-[10px] text-slate-500 dark:text-[var(--text-secondary)]">
+                        {createdDate}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[10px] text-slate-500 dark:text-[var(--text-secondary)]">
+                        UID
+                      </span>
+                      <span className="text-[10px] font-mono truncate max-w-[120px]">
+                        {userDoc.uid}
+                      </span>
+                    </div>
+
+                    {/* kolom URL foto muncul tepat di bawah UID */}
+                    {showAvatarInput && (
+                      <div className="mt-1 space-y-1">
+                        <label className="text-[10px] text-slate-600 dark:text-[var(--text-secondary)]">
+                          URL foto profil
+                        </label>
+                        <input
+                          className="input text-[11px]"
+                          placeholder="https://..."
+                          value={avatarInput}
+                          onChange={(e) => setAvatarInput(e.target.value)}
+                        />
+                        <button
+                          onClick={handleSaveAvatar}
+                          disabled={savingAvatar}
+                          className="btn-primary w-full text-[11px] mt-1"
+                        >
+                          {savingAvatar ? "Menyimpan..." : "Simpan"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </button>
+              </div>
             ) : (
               <p className="text-xs text-slate-500 dark:text-[var(--text-secondary)]">
                 Belum login
@@ -400,91 +443,6 @@ export default function Home() {
                 </Link>
               )}
             </nav>
-
-            {profileOpen && userDoc && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div
-                  className="absolute inset-0"
-                  onClick={() => {
-                    setProfileOpen(false);
-                    setShowAvatarInput(false);
-                  }}
-                />
-                <div
-                  className="relative z-10 w-full max-w-xs rounded-xl p-4 bg-white dark:bg-card-dark border border-slate-200 dark:border-slate-700"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <p className="text-xs text-slate-600 dark:text-[var(--text-secondary)]">
-                        Role:{" "}
-                        <span className="font-semibold">{userDoc.role}</span>
-                      </p>
-                      <p className="text-xs text-slate-600 dark:text-[var(--text-secondary)]">
-                        Saldo:{" "}
-                        <span className="font-semibold">
-                          Rp {Number(userDoc.saldo || 0).toLocaleString("id-ID")}
-                        </span>
-                      </p>
-                    </div>
-                    <p className="text-[11px] text-slate-500 dark:text-[var(--text-secondary)]">
-                      {createdDate}
-                    </p>
-                  </div>
-
-                  <div className="w-full flex justify-center mb-4">
-                    <button
-                      onClick={() => setShowAvatarInput((v) => !v)}
-                      className="h-20 w-20 rounded-full border border-slate-300 dark:border-slate-600 overflow-hidden bg-white dark:bg-bg-dark flex items-center justify-center"
-                    >
-                      {userDoc.photoURL ? (
-                        <img
-                          src={userDoc.photoURL}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <FiUser className="text-slate-500 dark:text-[var(--text-secondary)] text-3xl" />
-                      )}
-                    </button>
-                  </div>
-
-                  <p className="text-xs font-semibold text-center text-slate-900 dark:text-[var(--text)] mb-1">
-                    {userDoc.username}
-                  </p>
-                  <p className="text-[11px] text-center text-slate-500 dark:text-[var(--text-secondary)] mb-3">
-                    {userDoc.email}
-                  </p>
-
-                  <div className="rounded-lg px-3 py-2 text-[11px] bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-[var(--text)] mb-4">
-                    UID: {userDoc.uid}
-                  </div>
-
-                  {showAvatarInput && (
-                    <div className="grid gap-1 mb-3">
-                      <label className="text-[11px] text-slate-700 dark:text-[var(--text-secondary)]">
-                        URL foto profil
-                      </label>
-                      <input
-                        className="input text-[11px]"
-                        placeholder="https://..."
-                        value={avatarInput}
-                        onChange={(e) => setAvatarInput(e.target.value)}
-                      />
-                    </div>
-                  )}
-
-                  {showAvatarInput && (
-                    <button
-                      onClick={handleSaveAvatar}
-                      disabled={savingAvatar}
-                      className="btn-primary w-full text-[11px]"
-                    >
-                      {savingAvatar ? "Menyimpan..." : "Simpan"}
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
         </div>
       )}
@@ -667,7 +625,6 @@ export default function Home() {
                   ? "Baru"
                   : null;
 
-                // buat URL cantik berdasarkan nama produk (tanpa simpan slug di DB)
                 const rawName = (p.name || "produk")
                   .toString()
                   .toLowerCase()
