@@ -107,7 +107,7 @@ export default function CartPage() {
     const currentQty = Number(item.qty || 1);
     const newQty = currentQty + delta;
 
-    if (newQty < 1) return; // minimal 1, kalau mau 0 bisa pakai tombol hapus
+    if (newQty < 1) return; // minimal 1
 
     setChangingQty((prev) => ({ ...prev, [itemId]: true }));
 
@@ -134,9 +134,14 @@ export default function CartPage() {
 
   const handleCheckout = () => {
     if (!currentUser || items.length === 0) return;
-    // TODO: arahkan ke halaman checkout sesuai kebutuhan
+    // TODO: arahkan ke halaman checkout sesuai kebutuhan kamu
     console.log("Checkout dengan item:", items);
   };
+
+  const totalItem = items.reduce(
+    (acc, it) => acc + Number(it.qty || 1),
+    0
+  );
 
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-bg-dark text-slate-900 dark:text-[var(--text)] text-sm">
@@ -247,10 +252,10 @@ export default function CartPage() {
                       {/* KANAN: NAMA, HARGA, QTY + HAPUS */}
                       <div className="flex-1 flex flex-col justify-between">
                         <div>
-                          {/* NAMA (dipendekkan, expand saat diklik) */}
+                          {/* NAMA */}
                           <p
                             className={`text-[12px] font-semibold text-slate-900 dark:text-[var(--text)] cursor-pointer break-words ${
-                              isNameExpanded ? "" : "line-clamp-1"
+                              isNameExpanded ? "line-clamp-none" : "line-clamp-1"
                             }`}
                             title={item.name}
                             onClick={() =>
@@ -263,12 +268,12 @@ export default function CartPage() {
                             {item.name || "Tanpa nama"}
                           </p>
 
-                          {/* HARGA (dipendekkan, expand saat diklik) */}
+                          {/* HARGA */}
                           <p
-                            className={`text-[11px] text-primary font-semibold mt-0.5 cursor-pointer ${
+                            className={`text-[11px] text-primary font-semibold mt-0.5 cursor-pointer max-w-[90%] ${
                               isPriceExpanded
-                                ? ""
-                                : "max-w-[90%] overflow-hidden text-ellipsis whitespace-nowrap"
+                                ? "break-all whitespace-normal"
+                                : "overflow-hidden text-ellipsis whitespace-nowrap"
                             }`}
                             onClick={() =>
                               setExpandedPrices((prev) => ({
@@ -278,17 +283,19 @@ export default function CartPage() {
                             }
                             title={formatRupiah(item.price)}
                           >
-                            {formatRupiah(item.price)}{" "}
-                            {qty > 1 && (
-                              <span className="text-[10px] text-slate-500 dark:text-[var(--text-secondary)]">
-                                (per item, qty {qty})
-                              </span>
-                            )}
+                            {formatRupiah(item.price)}
                           </p>
+
+                          {/* Info qty saat harga di bawahnya (supaya nggak nambah panjang baris harga) */}
+                          {qty > 1 && (
+                            <p className="text-[10px] text-slate-500 dark:text-[var(--text-secondary)] mt-0.5">
+                              (per item, qty {qty})
+                            </p>
+                          )}
                         </div>
 
                         {/* BAWAH: QTY CONTROLS + HAPUS */}
-                        <div className="flex items-center justify-between mt-2">
+                        <div className="flex items-center justify-between mt-2 gap-2 flex-wrap">
                           {/* QTY - angka + */}
                           <div className="inline-flex items-center gap-1">
                             <button
@@ -334,9 +341,9 @@ export default function CartPage() {
             <section className="card p-3 sm:p-4">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs text-slate-600 dark:text-[var(--text-secondary)]">
-                  Total ({items.reduce((acc, it) => acc + Number(it.qty || 1), 0)} item)
+                  Total ({totalItem} item)
                 </span>
-                <span className="text-sm font-semibold text-slate-900 dark:text-[var(--text)]">
+                <span className="text-sm font-semibold text-slate-900 dark:text-[var(--text)] max-w-[90%] break-all">
                   {formatRupiah(totalHarga)}
                 </span>
               </div>
