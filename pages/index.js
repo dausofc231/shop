@@ -319,16 +319,19 @@ export default function Home() {
             }}
           />
 
-          <div className="absolute right-0 top-0 h-full w-64 bg-white dark:bg-card-dark shadow-xl p-4 flex flex-col gap-3">
-            {userDoc ? (
-              <div className="relative flex flex-col gap-2 text-xs text-slate-800 dark:text-[var(--text)]">
-                {/* TANGGAL DI POJOK KANAN ATAS */}
-                <span className="absolute top-0 right-0 text-[10px] text-slate-500 dark:text-[var(--text-secondary)]">
-                  {createdDate}
-                </span>
+          {/* tambah "relative" supaya tanggal bisa absolute ke pojok atas */}
+          <div className="absolute right-0 top-0 h-full w-64 bg-white dark:bg-card-dark shadow-xl p-4 flex flex-col gap-3 relative">
+            {/* TANGGAL DI POJOK KANAN ATAS PANEL */}
+            {userDoc && (
+              <span className="absolute top-2 right-4 text-[10px] text-slate-500 dark:text-[var(--text-secondary)]">
+                {createdDate}
+              </span>
+            )}
 
-                {/* BARIS ATAS: FOTO + NAMA + SALDO+ROLE */}
-                <div className="flex items-start pt-4">
+            {userDoc ? (
+              <div className="flex flex-col gap-2 text-xs text-slate-800 dark:text-[var(--text)]">
+                {/* BARIS ATAS: FOTO + NAMA */}
+                <div className="flex items-start pt-2">
                   {/* avatar + garis vertikal */}
                   <div className="relative pr-3 mr-3">
                     <button
@@ -350,25 +353,24 @@ export default function Home() {
                   </div>
 
                   {/* teks kanan */}
-                  <div className="flex-1 space-y-1 min-w-0">
-                    {/* nama (sendiri) */}
+                  <div className="flex-1 min-w-0">
+                    {/* nama */}
                     <span className="font-semibold block truncate">
                       {userDoc.username}
                     </span>
 
-                    {/* saldo + role dalam 1 baris */}
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-[11px] flex-1 min-w-0 whitespace-nowrap overflow-hidden text-ellipsis">
-                        Saldo:{" "}
-                        <span className="font-semibold">
-                          Rp{" "}
-                          {Number(userDoc.saldo || 0).toLocaleString("id-ID")}
-                        </span>
+                    {/* ROLE DIPINDAH KE SINI (DI BAWAH NAMA) */}
+                    <span className="inline-flex mt-1 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-[10px] font-medium whitespace-nowrap">
+                      {userDoc.role || "-"}
+                    </span>
+
+                    {/* saldo di baris sendiri */}
+                    <span className="mt-1 block text-[11px] whitespace-nowrap overflow-hidden text-ellipsis">
+                      Saldo:{" "}
+                      <span className="font-semibold">
+                        Rp {Number(userDoc.saldo || 0).toLocaleString("id-ID")}
                       </span>
-                      <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-700 text-[10px] font-medium whitespace-nowrap">
-                        {userDoc.role || "-"}
-                      </span>
-                    </div>
+                    </span>
                   </div>
                 </div>
 
