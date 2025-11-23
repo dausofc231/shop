@@ -63,10 +63,11 @@ export default function ProductDetailPage() {
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
 
-  // title expand
+  // title + deskripsi expand
   const [showFullTitle, setShowFullTitle] = useState(false);
+  const [showFullDesc, setShowFullDesc] = useState(false);
 
-  // komentar (sekarang ke Firestore)
+  // komentar
   const [commentName, setCommentName] = useState("");
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState([]);
@@ -92,7 +93,7 @@ export default function ProductDetailPage() {
   const toggleTheme = () =>
     setTheme((prev) => (prev === "dark" ? "light" : "dark"));
 
-  /* AUTH (opsional, buat nanti kalau mau pakai user di komentar) */
+  /* AUTH (opsional, untuk simpan uid user di komentar) */
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
@@ -174,7 +175,7 @@ export default function ProductDetailPage() {
     setTouchStartX(null);
   };
 
-  /* LIKE HANDLER – update ke Firestore */
+  /* LIKE HANDLER – update Firestore */
   const handleToggleLike = async () => {
     if (!product) return;
 
@@ -184,17 +185,14 @@ export default function ProductDetailPage() {
     const newLiked = !prevLiked;
     const newCount = Math.max(prevCount + (newLiked ? 1 : -1), 0);
 
-    // update UI dulu (optimistik)
     setLiked(newLiked);
     setLikeCount(newCount);
     setProduct((prev) => (prev ? { ...prev, likes: newCount } : prev));
 
     try {
-      const ref = doc(db, "products", product.id);
-      await updateDoc(ref, { likes: newCount });
+      await updateDoc(doc(db, "products", product.id), { likes: newCount });
     } catch (err) {
       console.error("Gagal update likes:", err);
-      // rollback kalau gagal
       setLiked(prevLiked);
       setLikeCount(prevCount);
       setProduct((prev) => (prev ? { ...prev, likes: prevCount } : prev));
@@ -221,7 +219,6 @@ export default function ProductDetailPage() {
       };
       const newDoc = await addDoc(commentsRef, payload);
 
-      // tambah ke UI (createdAt pakai Date lokal biar ada tampilan)
       setComments((prev) => [
         {
           id: newDoc.id,
@@ -256,7 +253,7 @@ export default function ProductDetailPage() {
   const stock = product?.stock ?? 0;
   const sold = product?.sold ?? 0;
 
-  const commentsToShow = showAllComments ? comments : comments.slice(0, 2);
+  const commentsToShow = showAllComments ? comments : comments.slice(0, 3);
 
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-bg-dark text-slate-900 dark:text-[var(--text)] text-sm">
@@ -316,11 +313,11 @@ export default function ProductDetailPage() {
             </Link>
           </div>
         ) : (
-          <div className="space-y-4 md:space-y-6">
+          <div className="space-y-4 md:space-y-5">
             {/* CARD UTAMA */}
-            <section className="card flex flex-col gap-4">
+            <section className="card flex flex-col gap-3">
               {/* IMAGE + VARIASI */}
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2">
                 {/* IMAGE BESAR */}
                 <div
                   className="relative w-full aspect-[4/3] bg-slate-200 dark:bg-slate-700 rounded-xl overflow-hidden"
@@ -367,7 +364,7 @@ export default function ProductDetailPage() {
                         key={img + idx}
                         type="button"
                         onClick={() => setActiveIndex(idx)}
-                        className={`relative h-14 w-14 rounded-lg overflow-hidden flex-shrink-0 border ${
+                        className={`relative h-12 w-12 rounded-lg overflow-hidden flex-shrink-0 border ${
                           idx === activeIndex
                             ? "border-primary"
                             : "border-slate-300 dark:border-slate-600"
@@ -384,41 +381,47 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              {/* INFO BAR TERJUAL / RATING */}
-              <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-[var(--text-secondary)]">
-                <span>
-                  Terjual:{" "}
-                  <span className="font-semibold">{formatCount(sold)}</span> |
-                  Stok:{" "}
-                  <span className="font-semibold">
-                    {formatCount(stock)}
-                  </span>
-                </span>
-
+              {/* RATING + LOVE */}
+              <div className="flex items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-[var(--text-secondary)]">
                 <span className="flex items-center gap-1">
                   Rating:{" "}
                   <span className="font-semibold">
                     {formatCount(likeCount)}
                   </span>{" "}
-                  |
-                  <button
-                    type="button"
-                    onClick={handleToggleLike}
-                    className="ml-0.5 inline-flex items-center justify-center h-5 w-5 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-bg-dark"
-                  >
-                    <FiHeart
-                      className={
-                        liked
-                          ? "text-red-500 fill-red-500 text-xs"
-                          : "text-slate-500 text-xs"
-                      }
-                    />
-                  </button>
+                  love
+                </span>
+                <button
+                  type="button"
+                  onClick={handleToggleLike}
+                  className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-bg-dark text-[11px]"
+                >
+                  <FiHeart
+                    className={
+                      liked
+                        ? "text-red-500 fill-red-500 text-xs"
+                        : "text-slate-500 text-xs"
+                    }
+                  />
+                  <span>{liked ? "Suka" : "Suka?"}</span>
+                </button>
+              </div>
+
+              {/* TERJUAL | STOK */}
+              <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-[var(--text-secondary)] -mt-1">
+                <span>
+                  Terjual:{" "}
+                  <span className="font-semibold">{formatCount(sold)}</span>
+                </span>
+                <span>
+                  Stok tersisa:{" "}
+                  <span className="font-semibold">
+                    {formatCount(stock)}
+                  </span>
                 </span>
               </div>
 
               {/* TITLE + HARGA */}
-              <div className="space-y-2">
+              <div className="space-y-1 pt-1 border-t border-slate-200 dark:border-slate-700">
                 <h1
                   className={`text-base sm:text-lg font-semibold text-slate-900 dark:text-[var(--text)] ${
                     showFullTitle ? "" : "line-clamp-2"
@@ -429,9 +432,9 @@ export default function ProductDetailPage() {
                   {product.name}
                 </h1>
 
-                <div className="flex flex-wrap items-baseline gap-2 text-sm sm:text-base">
+                <div className="flex flex-wrap items-baseline gap-1.5 text-sm sm:text-base mt-0.5">
                   {hasDiscount && (
-                    <span className="text-xs text-slate-400 line-through">
+                    <span className="text-[11px] text-slate-400 line-through">
                       Rp {basePrice.toLocaleString("id-ID")}
                     </span>
                   )}
@@ -451,7 +454,7 @@ export default function ProductDetailPage() {
               {/* KATEGORI */}
               {Array.isArray(product.categories) &&
                 product.categories.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-1">
+                  <div className="flex flex-wrap gap-2 mt-2">
                     {product.categories.map((cat) => (
                       <span
                         key={cat}
@@ -463,15 +466,30 @@ export default function ProductDetailPage() {
                   </div>
                 )}
 
-              {/* DESKRIPSI */}
-              <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
+              {/* DESKRIPSI (collapsible) */}
+              <div className="mt-3 pt-2 border-t border-slate-200 dark:border-slate-700">
                 <h2 className="text-xs font-semibold mb-1 text-slate-900 dark:text-[var(--text)]">
                   Deskripsi Produk
                 </h2>
                 {product.description ? (
-                  <p className="text-xs text-slate-700 dark:text-[var(--text-secondary)] leading-relaxed">
-                    {product.description}
-                  </p>
+                  <>
+                    <p
+                      className={`text-xs text-slate-700 dark:text-[var(--text-secondary)] leading-relaxed ${
+                        showFullDesc ? "" : "line-clamp-3"
+                      }`}
+                    >
+                      {product.description}
+                    </p>
+                    {product.description.length > 80 && (
+                      <button
+                        type="button"
+                        onClick={() => setShowFullDesc((v) => !v)}
+                        className="mt-1 text-[11px] text-primary hover:underline"
+                      >
+                        {showFullDesc ? "Tutup deskripsi" : "Selengkapnya"}
+                      </button>
+                    )}
+                  </>
                 ) : (
                   <p className="text-xs text-slate-500 dark:text-[var(--text-secondary)]">
                     Belum ada deskripsi yang ditambahkan.
@@ -491,7 +509,10 @@ export default function ProductDetailPage() {
                   <span className="font-semibold">
                     {formatCount(likeCount)}
                   </span>{" "}
-                  love
+                  love | Komentar:{" "}
+                  <span className="font-semibold">
+                    {comments.length}
+                  </span>
                 </span>
               </div>
 
@@ -531,50 +552,52 @@ export default function ProductDetailPage() {
               </form>
 
               {/* LIST KOMENTAR */}
-              <div className="border border-dashed border-slate-200 dark:border-slate-600 rounded-lg p-3">
+              <div className="border border-slate-200 dark:border-slate-600 rounded-lg p-3 bg-slate-50/60 dark:bg-slate-800/40">
                 {comments.length === 0 ? (
                   <p className="text-[11px] text-slate-500 dark:text-[var(--text-secondary)]">
                     Belum ada komentar. Jadilah yang pertama memberikan ulasan.
                   </p>
                 ) : (
                   <div className="space-y-2">
-                    {commentsToShow.map((c) => {
-                      let tanggal = "";
-                      try {
-                        if (c.createdAt?.toDate) {
-                          tanggal = c.createdAt
-                            .toDate()
-                            .toLocaleDateString("id-ID");
-                        } else if (c.createdAt instanceof Date) {
-                          tanggal = c.createdAt.toLocaleDateString("id-ID");
+                    <div className="max-h-40 overflow-y-auto pr-1 space-y-2">
+                      {commentsToShow.map((c) => {
+                        let tanggal = "";
+                        try {
+                          if (c.createdAt?.toDate) {
+                            tanggal = c.createdAt
+                              .toDate()
+                              .toLocaleDateString("id-ID");
+                          } else if (c.createdAt instanceof Date) {
+                            tanggal = c.createdAt.toLocaleDateString("id-ID");
+                          }
+                        } catch {
+                          tanggal = "";
                         }
-                      } catch {
-                        tanggal = "";
-                      }
 
-                      return (
-                        <div
-                          key={c.id}
-                          className="rounded-md bg-slate-50 dark:bg-slate-800/70 px-2 py-1.5"
-                        >
-                          <div className="flex items-center justify-between gap-2 mb-0.5">
-                            <p className="text-[11px] font-semibold text-slate-800 dark:text-[var(--text)]">
-                              {c.name || "Anonim"}
+                        return (
+                          <div
+                            key={c.id}
+                            className="rounded-md bg-white/70 dark:bg-slate-900/60 px-2 py-1.5 border border-slate-200 dark:border-slate-700"
+                          >
+                            <div className="flex items-center justify-between gap-2 mb-0.5">
+                              <p className="text-[11px] font-semibold text-slate-800 dark:text-[var(--text)]">
+                                {c.name || "Anonim"}
+                              </p>
+                              {tanggal && (
+                                <span className="text-[10px] text-slate-400 dark:text-[var(--text-secondary)]">
+                                  {tanggal}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-slate-600 dark:text-[var(--text-secondary)] leading-snug">
+                              {c.text}
                             </p>
-                            {tanggal && (
-                              <span className="text-[10px] text-slate-400 dark:text-[var(--text-secondary)]">
-                                {tanggal}
-                              </span>
-                            )}
                           </div>
-                          <p className="text-[11px] text-slate-600 dark:text-[var(--text-secondary)]">
-                            {c.text}
-                          </p>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
 
-                    {comments.length > 2 && (
+                    {comments.length > 3 && (
                       <button
                         type="button"
                         onClick={() => setShowAllComments((v) => !v)}
