@@ -16,6 +16,7 @@ import {
   setDoc,
   deleteDoc,
   increment,
+  onSnapshot,
 } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import {
@@ -139,32 +140,47 @@ export default function ProductDetailPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser]);
 
-  /* LOAD PRODUCT BY ID */
+  /* LOAD PRODUCT BY ID (REALTIME) */
   useEffect(() => {
     if (!id) return;
-    const loadProduct = async () => {
-      try {
-        setLoading(true);
-        const ref = doc(db, "products", id);
-        const snap = await getDoc(ref);
+
+    const ref = doc(db, "products", id);
+    setLoading(true);
+
+    const unsub = onSnapshot(
+      ref,
+      (snap) => {
         if (!snap.exists()) {
           setNotFound(true);
           setProduct(null);
+          setLoading(false);
           return;
         }
+
         const data = snap.data();
         const initialLikes = typeof data.likes === "number" ? data.likes : 0;
+        const stock = typeof data.stock === "number" ? data.stock : 0;
+        const sold = typeof data.sold === "number" ? data.sold : 0;
 
-        setProduct({ id: snap.id, ...data, likes: initialLikes });
+        setProduct({
+          id: snap.id,
+          ...data,
+          likes: initialLikes,
+          stock,
+          sold,
+        });
         setLikeCount(initialLikes);
-      } catch (err) {
-        console.error(err);
+        setNotFound(false);
+        setLoading(false);
+      },
+      (err) => {
+        console.error("Gagal subscribe product:", err);
         setNotFound(true);
-      } finally {
         setLoading(false);
       }
-    };
-    loadProduct();
+    );
+
+    return () => unsub();
   }, [id]);
 
   /* CEK APAKAH USER SUDAH LIKE (SUBKOLEKSI likes) */
@@ -440,10 +456,10 @@ export default function ProductDetailPage() {
                 className="relative h-8 w-8 flex items-center justify-center rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-card-dark"
                 aria-label="Lihat keranjang"
               >
-                  <FiShoppingCart className="text-slate-700 dark:text-[var(--text)]" />
-                  <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-0.5 rounded-full bg-primary text-[10px] text-white flex items-center justify-center">
-                    {cartCount > 99 ? "99+" : cartCount}
-                  </span>
+                <FiShoppingCart className="text-slate-700 dark:text-[var(--text)]" />
+                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-0.5 rounded-full bg-primary text-[10px] text-white flex items-center justify-center">
+                  {cartCount > 99 ? "99+" : cartCount}
+                </span>
               </button>
             )}
 

@@ -9,6 +9,7 @@ import {
   doc,
   deleteDoc,
   updateDoc,
+  runTransaction,
 } from "firebase/firestore";
 import { onAuthStateChanged } from "firebase/auth";
 import { FiArrowLeft, FiTrash2, FiSun, FiMoon } from "react-icons/fi";
@@ -28,6 +29,8 @@ export default function CartPage() {
   const [loadingItems, setLoadingItems] = useState(true);
   const [removing, setRemoving] = useState({});
   const [changingQty, setChangingQty] = useState({});
+  const [checkingOut, setCheckingOut] = useState(false);
+  const [checkoutError, setCheckoutError] = useState("");
 
   const [expandedNames, setExpandedNames] = useState({});
   const [expandedPrices, setExpandedPrices] = useState({});
@@ -130,14 +133,123 @@ export default function CartPage() {
     0
   );
 
-  const handleCheckout = () => {
-    if (!currentUser || items.length === 0) return;
-    console.log("Checkout dengan item:", items);
-  };
-
   const totalItem = items.reduce((acc, it) => acc + Number(it.qty || 1), 0);
 
   const useSlider = items.length > 5; // <--- KONDISI SLIDER
+
+  const handleCheckout = async () => {
+    if (!currentUser || items.length === 0 || checkingOut) return;
+
+    setCheckingOut(true);
+    setCheckoutError("");
+
+    try {
+      await runTransaction(db, async (transaction) => {
+        const userRef = doc(db, "users", currentUser.uid);
+        const userSnap = await transaction.get(userRef);
+
+        if (!userSnap.exists()) {
+          throw new Error("Data user tidak ditemukan.");
+        }
+
+        const userData = userSnap.data();
+
+        // GANTI 'saldo' DENGAN NAMA FIELD SALDO YANG KAMU PAKAI
+        const saldoSekarang = Number(userData.saldo || 0);
+
+        let total = 0;
+
+        // map productId -> { productRef, totalQty, cartDocs }
+        const productMap = new Map();
+
+        for (const item of items) {
+          const qty = Number(item.qty || 1);
+          if (qty <= 0) continue;
+
+          const hargaSatuan = Number(item.price || 0);
+          total += hargaSatuan * qty;
+
+          const productId = item.productId || item.id;
+          if (!productId) {
+            throw new Error("Produk di keranjang tidak valid.");
+          }
+
+          if (!productMap.has(productId)) {
+            const productRef = doc(db, "products", productId);
+            productMap.set(productId, {
+              productRef,
+              totalQty: 0,
+              cartDocs: [],
+            });
+          }
+
+          const entry = productMap.get(productId);
+          entry.totalQty += qty;
+          entry.cartDocs.push(
+            doc(db, "users", currentUser.uid, "cart", item.id)
+          );
+        }
+
+        if (total <= 0) {
+          throw new Error("Total belanja tidak valid.");
+        }
+
+        if (saldoSekarang < total) {
+          throw new Error("Saldo tidak cukup untuk melakukan transaksi.");
+        }
+
+        // Cek stok tiap produk & update
+        for (const { productRef, totalQty, cartDocs } of productMap.values()) {
+          const pSnap = await transaction.get(productRef);
+          if (!pSnap.exists()) {
+            throw new Error("Salah satu produk sudah tidak tersedia.");
+          }
+
+          const pData = pSnap.data();
+          const stock = Number(pData.stock || 0);
+          const sold = Number(pData.sold || 0);
+          const namaProduk = pData.name || "Produk";
+
+          if (stock < totalQty) {
+            throw new Error(
+              `Stok "${namaProduk}" tidak mencukupi (tersisa ${stock}, diminta ${totalQty}).`
+            );
+          }
+
+          transaction.update(productRef, {
+            stock: stock - totalQty,
+            sold: sold + totalQty,
+          });
+
+          // hapus semua doc cart yang terkait produk ini
+          for (const cartDocRef of cartDocs) {
+            transaction.delete(cartDocRef);
+          }
+        }
+
+        // update saldo user
+        transaction.update(userRef, {
+          saldo: saldoSekarang - total,
+        });
+
+        // OPTIONAL: simpan riwayat order
+        // const orderRef = doc(collection(db, "users", currentUser.uid, "orders"));
+        // transaction.set(orderRef, {
+        //   items,
+        //   total,
+        //   createdAt: serverTimestamp(),
+        // });
+      });
+
+      // Kalau sampai sini, transaksi berhasil
+      setItems([]); // kosongkan cart di UI
+    } catch (err) {
+      console.error("Gagal checkout:", err);
+      setCheckoutError(err.message || "Gagal melakukan checkout.");
+    } finally {
+      setCheckingOut(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-bg-dark text-slate-900 dark:text-[var(--text)] text-sm">
@@ -214,9 +326,7 @@ export default function CartPage() {
               {/* WRAPPER YANG JADI SLIDER KALAU > 5 ITEM */}
               <div
                 className={`space-y-2 ${
-                  useSlider
-                    ? "max-h-80 overflow-y-auto pr-1" // tinggi bisa diatur sesuai selera
-                    : ""
+                  useSlider ? "max-h-80 overflow-y-auto pr-1" : ""
                 }`}
               >
                 {items.map((item) => {
@@ -297,9 +407,7 @@ export default function CartPage() {
                           <div className="inline-flex items-center gap-1">
                             <button
                               type="button"
-                              onClick={() =>
-                                handleChangeQty(item.id, -1)
-                              }
+                              onClick={() => handleChangeQty(item.id, -1)}
                               disabled={
                                 qty <= 1 || !!changingQty[item.id]
                               }
@@ -312,9 +420,7 @@ export default function CartPage() {
                             </span>
                             <button
                               type="button"
-                              onClick={() =>
-                                handleChangeQty(item.id, 1)
-                              }
+                              onClick={() => handleChangeQty(item.id, 1)}
                               disabled={!!changingQty[item.id]}
                               className="h-6 w-6 flex items-center justify-center rounded-full border border-slate-300 dark:border-slate-500 bg-white dark:bg-slate-900 text-[12px] disabled:opacity-50"
                             >
@@ -353,11 +459,16 @@ export default function CartPage() {
               <button
                 type="button"
                 onClick={handleCheckout}
-                disabled={items.length === 0}
+                disabled={items.length === 0 || checkingOut}
                 className="w-full inline-flex items-center justify-center rounded-lg bg-primary text-white text-[11px] font-semibold py-2 disabled:opacity-60"
               >
-                Lanjut ke Checkout
+                {checkingOut ? "Memproses..." : "Lanjut ke Checkout"}
               </button>
+              {checkoutError && (
+                <p className="mt-2 text-[11px] text-red-500">
+                  {checkoutError}
+                </p>
+              )}
             </section>
           </div>
         )}
